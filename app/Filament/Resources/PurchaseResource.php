@@ -10,6 +10,8 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use App\Models\PurchaseItem;
 use Filament\Tables;
+
+use App\Filament\Exports\PurchaseExporter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\PurchaseResource\Pages\CreatePurchase;
@@ -17,7 +19,10 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
+use Filament\Actions\Exports\Enums\ExportFormat;
 use Filament\Forms\Get;
+use Illuminate\Support\Facades\App;
+use Filament\Tables\Actions\Action;
 use Filament\Forms\Set;
 
 class PurchaseResource extends Resource
@@ -117,39 +122,53 @@ class PurchaseResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('items_bought')
+
+                Tables\Columns\TextColumn::make('item_names')
                     ->label('Items Dibeli')
-                    ->getStateUsing(function (Purchase $record) {
+                    ->getStateUsing(function (Purchase $record): array {
                         return $record->purchaseItems->map(function ($item) {
-                            return ($item->item->name ?? 'Item Tidak Dikenal') . ' (' . $item->qty . ')';
+                            return $item->item->name ?? 'Item Tidak Dikenal';
                         })->toArray();
                     })
+                    ->listWithLineBreaks()
+                    ->bulleted(),
 
-                    ->listWithLineBreaks(),
-Tables\Columns\TextColumn::make('unit_prices')
-                ->label('Harga Unit')
-                ->getStateUsing(function (Purchase $record): array {
-                    return $record->purchaseItems->map(function ($item) {
-                        $unitPrice = $item->unit_price ?? 0;
-                        $formattedUnitPrice = 'IDR ' . number_format($unitPrice, 0, ',', '.');
-                        return $formattedUnitPrice;
-                    })->toArray();
-                })
-                ->listWithLineBreaks() 
-                ->alignCenter(),
+                Tables\Columns\TextColumn::make('item_quantities')
+                    ->label('Jumlah Dibeli')
+                    ->getStateUsing(function (Purchase $record): array {
+                        return $record->purchaseItems->map(function ($item) {
+                            return $item->qty ?? 0;
+                        })->toArray();
+                    })
+                    ->listWithLineBreaks()
+                    ->badge()->color('success')
+                    ->alignCenter(),
 
-            Tables\Columns\TextColumn::make('item_subtotals')
-                ->label('Subtotal Item')
-                ->getStateUsing(function (Purchase $record): array {
-                    return $record->purchaseItems->map(function ($item) {
-                        $subtotal = $item->subtotal ?? 0;
-                        $formattedSubtotal = 'IDR ' . number_format($subtotal, 0, ',', '.');
-                        return "{$formattedSubtotal}";
-                    })->toArray();
-                })
-                ->listWithLineBreaks() 
-                ->html() 
-                ->alignCenter(),
+                Tables\Columns\TextColumn::make('unit_prices')
+                    ->label('Harga Unit')
+                    ->getStateUsing(function (Purchase $record): array {
+                        return $record->purchaseItems->map(function ($item) {
+                            $unitPrice = $item->unit_price ?? 0;
+                            $formattedUnitPrice = 'IDR ' . number_format($unitPrice, 0, ',', '.');
+                            return $formattedUnitPrice;
+                        })->toArray();
+                    })
+                    ->listWithLineBreaks()
+                    ->alignCenter(),
+
+                Tables\Columns\TextColumn::make('item_subtotals')
+                    ->label('Subtotal Item')
+                    ->getStateUsing(function (Purchase $record): array {
+                        return $record->purchaseItems->map(function ($item) {
+                            $subtotal = $item->subtotal ?? 0;
+                            $formattedSubtotal = 'IDR ' . number_format($subtotal, 0, ',', '.');
+                            return "{$formattedSubtotal}";
+                        })->toArray();
+                    })
+                    ->listWithLineBreaks()
+                    ->alignCenter()
+                    ->money('idr', true),
+
                 Tables\Columns\TextColumn::make('total_amount')->label('Total Amount')->money('idr', true)->alignCenter(),
                 Tables\Columns\TextColumn::make('note')->label('Note')->alignCenter(),
                 Tables\Columns\TextColumn::make('created_at')->label('Created At')->date()->alignCenter(),
@@ -163,10 +182,32 @@ Tables\Columns\TextColumn::make('unit_prices')
                 Tables\Actions\ViewAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ]);
+
+            ])->headerActions([
+Action::make('export_pdf') // <-- Tambahkan Action Kustom ini
+                ->label('Ekspor ke PDF')
+                ->color('danger')
+                ->icon('heroicon-o-document-arrow-down')
+                ->action(function () use ($table) {
+                    // 1. Ambil data dari query tabel saat ini (termasuk filter yang aktif)
+                    $query = $table->getLivewire()->getFilteredTableQuery();
+                    
+                    // Gunakan with() untuk memuat relasi agar tidak ada N+1 query
+                    $records = $query->with('purchaseItems.item')->get(); 
+
+                    // 2. Render view HTML menggunakan DomPDF
+                    $pdf = App::make('dompdf.wrapper');
+                    $pdf->loadView('pdf.purchase_report', compact('records'));
+
+                    // 3. Download file
+                    $fileName = 'Laporan_Pembelian_' . now()->format('Ymd_His') . '.pdf';
+                    return response()->streamDownload(function () use ($pdf) {
+                        echo $pdf->stream();
+                    }, $fileName);
+                }),
+                ]);
+
+
     }
 
     public static function getRelations(): array

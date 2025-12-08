@@ -4,7 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ItemReportResource\Pages;
 use App\Filament\Resources\ItemReportResource\RelationManagers;
-use App\Models\ItemReport;
+
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -15,7 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ItemReportResource extends Resource
 {
-    protected static ?string $model = ItemReport::class;
+
     protected static ?string $navigationGroup = 'Reports';
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
