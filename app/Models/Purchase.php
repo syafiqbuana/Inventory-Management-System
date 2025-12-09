@@ -15,4 +15,10 @@ class Purchase extends Model
     {
         return $this->hasMany(PurchaseItem::class);
     }
+
+    public function getCurrentBalanceAttribute()
+    {
+$globalBalance = Balance::find(1); // Ambil record Balance dengan ID 1
+        return $globalBalance->amount ?? 0;
+    }
 }

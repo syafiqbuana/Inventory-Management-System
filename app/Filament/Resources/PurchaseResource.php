@@ -10,10 +10,13 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use App\Models\PurchaseItem;
 use Filament\Tables;
-
+use Filament\Tables\Filters\Filter; // Tambahkan ini di bagian use statements
+use Illuminate\Database\Eloquent\Builder; // Pastikan ini juga ada
+use Carbon\Carbon; // Tambahkan ini di bagian use statements
+use Filament\Forms\Components\DatePicker; // Tambahkan ini di bagian use statements
+use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
 use App\Filament\Exports\PurchaseExporter;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Resources\PurchaseResource\Pages\CreatePurchase;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\TextInput;
@@ -122,61 +125,43 @@ class PurchaseResource extends Resource
     {
         return $table
             ->columns([
-
-                Tables\Columns\TextColumn::make('item_names')
-                    ->label('Items Dibeli')
-                    ->getStateUsing(function (Purchase $record): array {
-                        return $record->purchaseItems->map(function ($item) {
-                            return $item->item->name ?? 'Item Tidak Dikenal';
-                        })->toArray();
-                    })
-                    ->listWithLineBreaks()
-                    ->bulleted(),
-
-                Tables\Columns\TextColumn::make('item_quantities')
-                    ->label('Jumlah Dibeli')
-                    ->getStateUsing(function (Purchase $record): array {
-                        return $record->purchaseItems->map(function ($item) {
-                            return $item->qty ?? 0;
-                        })->toArray();
-                    })
-                    ->listWithLineBreaks()
-                    ->badge()->color('success')
-                    ->alignCenter(),
-
-                Tables\Columns\TextColumn::make('unit_prices')
-                    ->label('Harga Unit')
-                    ->getStateUsing(function (Purchase $record): array {
-                        return $record->purchaseItems->map(function ($item) {
-                            $unitPrice = $item->unit_price ?? 0;
-                            $formattedUnitPrice = 'IDR ' . number_format($unitPrice, 0, ',', '.');
-                            return $formattedUnitPrice;
-                        })->toArray();
-                    })
-                    ->listWithLineBreaks()
-                    ->alignCenter(),
-
-                Tables\Columns\TextColumn::make('item_subtotals')
-                    ->label('Subtotal Item')
-                    ->getStateUsing(function (Purchase $record): array {
-                        return $record->purchaseItems->map(function ($item) {
-                            $subtotal = $item->subtotal ?? 0;
-                            $formattedSubtotal = 'IDR ' . number_format($subtotal, 0, ',', '.');
-                            return "{$formattedSubtotal}";
-                        })->toArray();
-                    })
-                    ->listWithLineBreaks()
-                    ->alignCenter()
-                    ->money('idr', true),
-
-                Tables\Columns\TextColumn::make('total_amount')->label('Total Amount')->money('idr', true)->alignCenter(),
-                Tables\Columns\TextColumn::make('note')->label('Note')->alignCenter(),
-                Tables\Columns\TextColumn::make('created_at')->label('Created At')->date()->alignCenter(),
-                Tables\Columns\TextColumn::make('updated_at')->label('Updated At')->date()->alignCenter(),
+            Tables\Columns\TextColumn::make('note')->label('Catatan')->alignLeft()->searchable(), 
+            Tables\Columns\TextColumn::make('item_names')
+                ->label('Items Dibeli')
+                ->getStateUsing(function (Purchase $record): array {
+                    return $record->purchaseItems->map(fn ($item) => $item->item->name ?? 'Item Tidak Dikenal')
+                        ->toArray();
+                })
+                ->listWithLineBreaks()
+                ->bulleted(),
+            Tables\Columns\TextColumn::make('item_quantities')
+                ->label('Jumlah Dibeli')
+                ->getStateUsing(fn (Purchase $record): array => $record->purchaseItems->map(fn ($item) => $item->qty ?? 0)->toArray())
+                ->listWithLineBreaks()
+                ->badge()->color('success')
+                ->alignCenter(),
+            Tables\Columns\TextColumn::make('unit_prices')
+                ->label('Harga Unit')
+                ->getStateUsing(fn (Purchase $record): array => $record->purchaseItems->map(fn ($item) => 'IDR ' . number_format($item->unit_price ?? 0, 0, ',', '.'))->toArray())
+                ->listWithLineBreaks()
+                ->alignCenter(),
+            Tables\Columns\TextColumn::make('item_subtotals')
+                ->label('Subtotal Item')
+                ->getStateUsing(fn (Purchase $record): array => $record->purchaseItems->map(fn ($item) => 'IDR ' . number_format($item->subtotal ?? 0, 0, ',', '.'))->toArray())
+                ->listWithLineBreaks()
+                ->alignRight(), 
+            Tables\Columns\TextColumn::make('total_amount')
+                ->label('Penggunaan Saldo (-)')
+                ->money('idr', true)
+                ->color('danger') 
+                ->alignRight(),            
+            Tables\Columns\TextColumn::make('created_at')->label('Tgl. Mutasi')->date()->alignCenter()->sortable(),
+            Tables\Columns\TextColumn::make('updated_at')->label('Updated At')->date()->alignCenter()->toggleable(isToggledHiddenByDefault: true),
 
             ])
             ->filters([
-                //
+                DateRangeFilter::make('created_at')
+                ->label('Filter Rentang Tanggal')
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
@@ -184,27 +169,20 @@ class PurchaseResource extends Resource
             ->bulkActions([
 
             ])->headerActions([
-Action::make('export_pdf') // <-- Tambahkan Action Kustom ini
-                ->label('Ekspor ke PDF')
-                ->color('danger')
-                ->icon('heroicon-o-document-arrow-down')
-                ->action(function () use ($table) {
-                    // 1. Ambil data dari query tabel saat ini (termasuk filter yang aktif)
-                    $query = $table->getLivewire()->getFilteredTableQuery();
-                    
-                    // Gunakan with() untuk memuat relasi agar tidak ada N+1 query
-                    $records = $query->with('purchaseItems.item')->get(); 
-
-                    // 2. Render view HTML menggunakan DomPDF
-                    $pdf = App::make('dompdf.wrapper');
-                    $pdf->loadView('pdf.purchase_report', compact('records'));
-
-                    // 3. Download file
-                    $fileName = 'Laporan_Pembelian_' . now()->format('Ymd_His') . '.pdf';
-                    return response()->streamDownload(function () use ($pdf) {
-                        echo $pdf->stream();
-                    }, $fileName);
-                }),
+                    Action::make('export_pdf') 
+                        ->label('Ekspor ke PDF')
+                        ->color('danger')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->action(function () use ($table) {
+                            $query = $table->getLivewire()->getFilteredTableQuery();
+                            $records = $query->with('purchaseItems.item')->get();
+                            $pdf = App::make('dompdf.wrapper');
+                            $pdf->loadView('pdf.purchase_report', compact('records'));
+                            $fileName = 'Laporan_Pembelian_' . now()->format('Ymd_His') . '.pdf';
+                            return response()->streamDownload(function () use ($pdf) {
+                                echo $pdf->stream();
+                            }, $fileName);
+                        }),
                 ]);
 
 

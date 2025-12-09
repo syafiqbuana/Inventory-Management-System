@@ -9,6 +9,7 @@ use Filament\Forms;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use App\Models\Purchase;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -38,7 +39,8 @@ class BalanceResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('amount')->money('idr', true),
-               
+                Tables\Columns\TextColumn::make('latest_purchase.note')->label('Latest Purchase Note')
+                    ->getStateUsing(fn(Balance $record) => $record->latest_purchase->note ?? 'Belum ada pembelian'),
                 Tables\Columns\TextColumn::make('created_at')->date(),
                 Tables\Columns\TextColumn::make('updated_at')->dateTime(),
             ])
