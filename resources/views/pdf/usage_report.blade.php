@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Laporan Pembelian</title>
-    <meta charset="UTF-8">
+    <title>Laporan Penggunaan Barang</title>
     <style>
         @page {
             margin: 2cm 1.5cm;
@@ -95,39 +94,6 @@
             text-align: center; 
         }
         
-        .item-list {
-            margin: 0;
-            padding: 0;
-            list-style: none;
-        }
-        .item-list li {
-            padding: 2px 0;
-            font-size: 10px;
-            border-bottom: 1px dotted #ddd;
-        }
-        .item-list li:last-child {
-            border-bottom: none;
-        }
-        .item-name {
-            font-weight: bold;
-            color: #333;
-        }
-        .item-detail {
-            color: #666;
-            font-size: 9px;
-        }
-        
-        tfoot tr.total {
-            background-color: #f5f5f5;
-            font-weight: bold;
-        }
-        
-        tfoot tr.balance {
-            background-color: #e8f4f8;
-            font-weight: bold;
-            border-top: 2px solid #333;
-        }
-        
         .summary {
             margin-top: 15px;
             padding: 10px;
@@ -150,6 +116,8 @@
             color: #666;
             page-break-inside: avoid;
         }
+        
+        /* Untuk print */
         @media print {
             body {
                 margin: 0;
@@ -165,7 +133,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>LAPORAN DATA PEMBELIAN</h1>
+        <h1>Laporan Penggunaan Barang</h1>
         <p>Tanggal Cetak: {{ now()->translatedFormat('d F Y H:i:s') }}</p>
     </div>
     
@@ -180,7 +148,7 @@
         </div>
     @else
         <div class="filter-info">
-            <p><strong>Tidak ada filter yang diterapkan.</strong> Menampilkan semua data pembelian.</p>
+            <p><strong>Tidak ada filter yang diterapkan.</strong> Menampilkan semua data penggunaan barang.</p>
         </div>
     @endif
     
@@ -188,47 +156,35 @@
         <thead>
             <tr>
                 <th style="width: 5%;">No.</th>
-                <th style="width: 8%;">ID</th>
-                <th style="width: 20%;">Catatan</th>
-                <th style="width: 15%;">Total Jumlah</th>
-                <th style="width: 37%;">Items Dibeli</th>
-                <th style="width: 15%;">Tanggal Pembelian</th>
+                <th style="width: 25%;">Nama Barang</th>
+                <th style="width: 15%;">Kategori</th>
+                <th style="width: 10%;">Jumlah</th>
+                <th style="width: 30%;">Digunakan Untuk</th>
+                <th style="width: 15%;">Tanggal Penggunaan</th>
             </tr>
         </thead>
         <tbody>
             @php 
                 $no = 1;
-                $grandTotal = 0;
+                $totalQty = 0;
             @endphp
             
-            @forelse ($records as $purchase)
+            @forelse ($records as $usage)
                 <tr>
                     <td class="center">{{ $no++ }}</td>
-                    <td class="center">{{ $purchase->id }}</td>
-                    <td>{{ $purchase->note ?? '-' }}</td>
-                    <td class="right">Rp {{ number_format($purchase->total_amount, 0, ',', '.') }}</td>
-                    <td>
-                        <ul class="item-list">
-                            @foreach ($purchase->purchaseItems as $item)
-                                <li>
-                                    <span class="item-name">{{ $item->item->name ?? 'N/A' }}</span><br>
-                                    <span class="item-detail">
-                                        {{ $item->qty }} unit × Rp {{ number_format($item->unit_price, 0, ',', '.') }} 
-                                        = Rp {{ number_format($item->qty * $item->unit_price, 0, ',', '.') }}
-                                    </span>
-                                </li>
-                            @endforeach
-                        </ul>
-                    </td>
-                    <td class="center">{{ \Carbon\Carbon::parse($purchase->created_at)->translatedFormat('d F Y') }}</td>
+                    <td>{{ $usage->item->name ?? '-' }}</td>
+                    <td class="center">{{ $usage->item->category->name ?? '-' }}</td>
+                    <td class="center">{{ number_format($usage->qty, 0, ',', '.') }}</td>
+                    <td>{{ $usage->used_for }}</td>
+                    <td class="center">{{ \Carbon\Carbon::parse($usage->created_at)->translatedFormat('d F Y') }}</td>
                 </tr>
                 @php
-                    $grandTotal += $purchase->total_amount;
+                    $totalQty += $usage->qty;
                 @endphp
             @empty
                 <tr>
                     <td colspan="6" class="center" style="padding: 20px; color: #999;">
-                        Tidak ada data pembelian yang tersedia
+                        Tidak ada data penggunaan barang yang tersedia
                     </td>
                 </tr>
             @endforelse
@@ -236,23 +192,10 @@
         
         @if ($records->count() > 0)
             <tfoot>
-                {{-- Baris 1: Total Pembelian Keseluruhan --}}
-                <tr class="total">
-                    <th colspan="3" class="right">TOTAL PEMBELIAN:</th>
-                    <th class="right">Rp {{ number_format($grandTotal, 0, ',', '.') }}</th>
+                <tr style="background-color: #f5f5f5;">
+                    <th colspan="3" class="right">Total Jumlah Penggunaan:</th>
+                    <th class="center">{{ number_format($totalQty, 0, ',', '.') }}</th>
                     <th colspan="2"></th>
-                </tr>
-                
-                {{-- Baris 2: SISA SALDO GLOBAL --}}
-                <tr class="balance">
-                    <th colspan="5" class="right">SISA SALDO GLOBAL:</th>
-                    <th class="right">
-                        @php
-                            $balance = \App\Models\Balance::first();
-                            $currentBalance = $balance->amount ?? 0;
-                        @endphp
-                        Rp {{ number_format($currentBalance, 0, ',', '.') }}
-                    </th>
                 </tr>
             </tfoot>
         @endif
@@ -261,9 +204,8 @@
     @if ($records->count() > 0)
         <div class="summary">
             <p><strong>Ringkasan:</strong></p>
-            <p>Total Transaksi Pembelian: {{ number_format($records->count(), 0, ',', '.') }} transaksi</p>
-            <p>Total Nilai Pembelian: Rp {{ number_format($grandTotal, 0, ',', '.') }}</p>
-            <p>Sisa Saldo Global: Rp {{ number_format($currentBalance ?? 0, 0, ',', '.') }}</p>
+            <p>Total Record: {{ number_format($records->count(), 0, ',', '.') }} penggunaan</p>
+            <p>Total Item Terpakai: {{ number_format($totalQty, 0, ',', '.') }} unit</p>
         </div>
     @endif
     

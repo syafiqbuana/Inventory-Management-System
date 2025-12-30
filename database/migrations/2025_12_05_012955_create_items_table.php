@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('category_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name');
+            $table->unsignedInteger('initial_stock')->default(0);
             $table->timestamps();
         });
     }

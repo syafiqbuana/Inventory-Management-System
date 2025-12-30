@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-
+use Illuminate\Support\Facades\DB;
 return new class extends Migration
 {
     /**
@@ -15,18 +15,20 @@ return new class extends Migration
             $table->id();
             $table->foreignId('purchase_id')->constrained()->cascadeOnDelete();
             $table->foreignId('item_id')->constrained()->cascadeOnDelete();
-            $table->unsignedinteger('qty');
+            $table->unsignedInteger('qty');
             $table->unsignedBigInteger('unit_price');
             $table->unsignedbigInteger('subtotal');
             $table->timestamps();
         });
-    }
 
+    }
+    
     /**
      * Reverse the migrations.
      */
     public function down(): void
-    {
+    {   
+        DB::unprepared('DROP TRIGGER IF EXISTS set_current_stock_on_purchase_insert;');
         Schema::dropIfExists('purchase_items');
     }
 };

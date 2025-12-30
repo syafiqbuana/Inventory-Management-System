@@ -10,14 +10,15 @@ class PurchaseItem extends Model
         'purchase_id',
         'item_id',
         'qty',
+
         'unit_price',
         'subtotal',
     ];
 
     protected $casts = [
-        'qty' =>'integer',
-        'unit_price'=>'integer',
-        'subtotal'=>'integer',
+        'qty' => 'integer',
+        'unit_price' => 'integer',
+        'subtotal' => 'integer',
     ];
 
     public function purchase()

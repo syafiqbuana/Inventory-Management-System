@@ -10,18 +10,18 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use App\Models\PurchaseItem;
 use Filament\Tables;
-use Filament\Tables\Filters\Filter; // Tambahkan ini di bagian use statements
-use Illuminate\Database\Eloquent\Builder; // Pastikan ini juga ada
-use Carbon\Carbon; // Tambahkan ini di bagian use statements
-use Filament\Forms\Components\DatePicker; // Tambahkan ini di bagian use statements
+use Filament\Tables\Filters\Filter;
+use Illuminate\Database\Eloquent\Builder;
+use Carbon\Carbon;
+use Filament\Forms\Components\DatePicker;
 use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
 use App\Filament\Exports\PurchaseExporter;
 use Filament\Tables\Table;
-use App\Filament\Resources\PurchaseResource\Pages\CreatePurchase;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Hidden;
 use Filament\Actions\Exports\Enums\ExportFormat;
 use Filament\Forms\Get;
 use Illuminate\Support\Facades\App;
@@ -86,10 +86,14 @@ class PurchaseResource extends Resource
                                     ->reactive()
                                     ->prefix('Rp')
                                     ->afterStateUpdated(function ($state, Set $set, Get $get) {
-                                        // SOLUSI: Hitung total setiap kali subtotal berubah
+                                        // Hitung total setiap kali subtotal berubah
                                         self::updateTotalAmount($get, $set);
-                                    })
-                                ,
+                                    }),
+
+                                Hidden::make('current_stock')
+                                    ->default(0)
+                                    ->dehydrated(), 
+                                
                             ])
                             ->columnSpanFull()
                             ->required()
@@ -108,7 +112,6 @@ class PurchaseResource extends Resource
             ]);
     }
 
-    // Helper function untuk menghitung total
     protected static function updateTotalAmount(Get $get, Set $set): void
     {
         $items = $get('purchaseItems') ?? [];
@@ -125,51 +128,52 @@ class PurchaseResource extends Resource
     {
         return $table
             ->columns([
-            Tables\Columns\TextColumn::make('note')->label('Catatan')->alignLeft()->searchable(), 
-            Tables\Columns\TextColumn::make('item_names')
-                ->label('Items Dibeli')
-                ->getStateUsing(function (Purchase $record): array {
-                    return $record->purchaseItems->map(fn ($item) => $item->item->name ?? 'Item Tidak Dikenal')
-                        ->toArray();
-                })
-                ->listWithLineBreaks()
-                ->bulleted(),
-            Tables\Columns\TextColumn::make('item_quantities')
-                ->label('Jumlah Dibeli')
-                ->getStateUsing(fn (Purchase $record): array => $record->purchaseItems->map(fn ($item) => $item->qty ?? 0)->toArray())
-                ->listWithLineBreaks()
-                ->badge()->color('success')
-                ->alignCenter(),
-            Tables\Columns\TextColumn::make('unit_prices')
-                ->label('Harga Unit')
-                ->getStateUsing(fn (Purchase $record): array => $record->purchaseItems->map(fn ($item) => 'IDR ' . number_format($item->unit_price ?? 0, 0, ',', '.'))->toArray())
-                ->listWithLineBreaks()
-                ->alignCenter(),
-            Tables\Columns\TextColumn::make('item_subtotals')
-                ->label('Subtotal Item')
-                ->getStateUsing(fn (Purchase $record): array => $record->purchaseItems->map(fn ($item) => 'IDR ' . number_format($item->subtotal ?? 0, 0, ',', '.'))->toArray())
-                ->listWithLineBreaks()
-                ->alignRight(), 
-            Tables\Columns\TextColumn::make('total_amount')
-                ->label('Penggunaan Saldo (-)')
-                ->money('idr', true)
-                ->color('danger') 
-                ->alignRight(),            
-            Tables\Columns\TextColumn::make('created_at')->label('Tgl. Mutasi')->date()->alignCenter()->sortable(),
-            Tables\Columns\TextColumn::make('updated_at')->label('Updated At')->date()->alignCenter()->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('note')->label('Catatan')->alignLeft()->searchable(),
+                Tables\Columns\TextColumn::make('item_names')
+                    ->label('Items Dibeli')
+                    ->getStateUsing(function (Purchase $record): array {
+                        return $record->purchaseItems->map(fn($item) => $item->item->name ?? 'Item Tidak Dikenal')
+                            ->toArray();
+                    })
+                    ->listWithLineBreaks()
+                    ->bulleted(),
+                Tables\Columns\TextColumn::make('item_quantities')
+                    ->label('Jumlah Dibeli')
+                    ->getStateUsing(fn(Purchase $record): array => $record->purchaseItems->map(fn($item) => $item->qty ?? 0)->toArray())
+                    ->listWithLineBreaks()
+                    ->badge()->color('success')
+                    ->alignCenter(),
+                Tables\Columns\TextColumn::make('unit_prices')
+                    ->label('Harga Unit')
+                    ->getStateUsing(fn(Purchase $record): array => $record->purchaseItems->map(fn($item) => 'IDR ' . number_format($item->unit_price ?? 0, 0, ',', '.'))->toArray())
+                    ->listWithLineBreaks()
+                    ->alignCenter(),
+                Tables\Columns\TextColumn::make('item_subtotals')
+                    ->label('Subtotal Item')
+                    ->getStateUsing(fn(Purchase $record): array => $record->purchaseItems->map(fn($item) => 'IDR ' . number_format($item->subtotal ?? 0, 0, ',', '.'))->toArray())
+                    ->listWithLineBreaks()
+                    ->alignRight(),
+                Tables\Columns\TextColumn::make('total_amount')
+                    ->label('Penggunaan Saldo (-)')
+                    ->money('idr', true)
+                    ->color('danger')
+                    ->alignRight(),
+                Tables\Columns\TextColumn::make('created_at')->label('Tgl. Mutasi')->date()->alignCenter()->sortable(),
+                Tables\Columns\TextColumn::make('updated_at')->label('Updated At')->date()->alignCenter()->toggleable(isToggledHiddenByDefault: true),
 
             ])
             ->filters([
                 DateRangeFilter::make('created_at')
-                ->label('Filter Rentang Tanggal')
+                    ->label('Filter Rentang Tanggal')
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
+                Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([
 
             ])->headerActions([
-                    Action::make('export_pdf') 
+                    Action::make('export_pdf')
                         ->label('Ekspor ke PDF')
                         ->color('danger')
                         ->icon('heroicon-o-document-arrow-down')
@@ -200,7 +204,7 @@ class PurchaseResource extends Resource
         return [
             'index' => Pages\ListPurchases::route('/'),
             'create' => Pages\CreatePurchase::route('/create'),
-            // 'edit' => Pages\EditPurchase::route('/{record}/edit'),
+            'edit' => Pages\EditPurchase::route('/{record}/edit'), // Aktifkan route edit
         ];
     }
 }

@@ -9,7 +9,10 @@ use Filament\Resources\Pages\ListRecords;
 class ListIncomes extends ListRecords
 {
     protected static string $resource = IncomeResource::class;
-
+    protected function getEloquentQuery()
+    {
+        return parent::getEloquentQuery()->with(['purchaseItems.item']);
+    }
     protected function getHeaderActions(): array
     {
         return [
