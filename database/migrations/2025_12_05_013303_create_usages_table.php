@@ -17,7 +17,7 @@ return new class extends Migration
             $table->unsignedinteger('qty');
             $table->string('used_for');
             $table->text('note')->nullable();
-
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
         });
     }

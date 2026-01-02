@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 class Item extends Model
 {
@@ -10,7 +11,17 @@ class Item extends Model
         'category_id',
         'name',
         'initial_stock',
+        'created_by',
     ];
+
+    protected static function booted()
+{
+    static::creating(function ($item) {
+        $item->created_by = Auth::id();
+
+    });
+}
+
 
     public function category()
     {
@@ -36,5 +47,10 @@ class Item extends Model
     public function getLatestPriceAttribute()
     {
         return $this->purchaseItems()->latest()->value('unit_price');
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class , 'created_by');
     }
 }

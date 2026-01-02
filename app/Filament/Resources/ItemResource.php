@@ -12,6 +12,7 @@ use Filament\Tables;
 use Illuminate\Support\Facades\App;
 use Filament\Tables\Actions\Action;
 use App\Models\Category;
+use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Components\Repeater;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -25,7 +26,7 @@ class ItemResource extends Resource
 
     protected static ?string $navigationGroup = 'Master Data';
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-archive-box';
 
     public static function form(Form $form): Form
     {
@@ -33,9 +34,14 @@ class ItemResource extends Resource
             ->schema([
                 Forms\Components\Grid::make()
                     ->schema([
+                        Forms\Components\Placeholder::make('created_by_name')
+                            ->label('Dibuat oleh :')
+                            ->content(fn($record) => $record?->createdBy?->name ?? Auth::user()->name)
+
+                        ,
                         // Form untuk CREATE (menambah multiple items sekaligus)
-                        Repeater::make('new_items') 
-                            ->label('Tambah Item') 
+                        Repeater::make('new_items')
+                            ->label('Tambah Item')
                             ->reactive()
                             ->default([])
                             ->defaultItems(1)
@@ -51,15 +57,16 @@ class ItemResource extends Resource
                                     ->label('Nama Item')
                                     ->required()
                                     ->maxLength(255),
-                                    
+
                                 Forms\Components\TextInput::make('initial_stock')
                                     ->label('Stok Awal')
                                     ->required()
                                     ->default(0)
-                                    ->numeric()
+                                    ->numeric(),
+
                             ])
                             ->columnSpanFull()
-                            ->visible(fn ($livewire) => $livewire instanceof Pages\CreateItem),
+                            ->visible(fn($livewire) => $livewire instanceof Pages\CreateItem),
 
                         // Form untuk EDIT (edit single item)
                         Forms\Components\Select::make('category_id')
@@ -67,26 +74,29 @@ class ItemResource extends Resource
                             ->options(Category::pluck('name', 'id'))
                             ->searchable()
                             ->required()
-                            ->visible(fn ($livewire) => $livewire instanceof Pages\EditItem),
+                            ->visible(fn($livewire) => $livewire instanceof Pages\EditItem),
 
                         Forms\Components\TextInput::make('name')
                             ->label('Nama Item')
                             ->required()
                             ->maxLength(255)
-                            ->visible(fn ($livewire) => $livewire instanceof Pages\EditItem),
-                            
+                            ->visible(fn($livewire) => $livewire instanceof Pages\EditItem),
+
                         Forms\Components\TextInput::make('initial_stock')
                             ->label('Stok Awal')
                             ->required()
                             ->numeric()
-                            ->visible(fn ($livewire) => $livewire instanceof Pages\EditItem),
+                            ->visible(fn($livewire) => $livewire instanceof Pages\EditItem),
 
                         Forms\Components\TextInput::make('total_stock')
                             ->label('Total Stok Saat Ini')
                             ->disabled()
                             ->dehydrated(false)
-                            ->visible(fn ($livewire) => $livewire instanceof Pages\EditItem),
-                    ]),                            
+                            ->visible(fn($livewire) => $livewire instanceof Pages\EditItem),
+                        Forms\Components\Hidden::make('created_by')
+                            ->default(Auth::user()->id)
+                            ->dehydrated(true),
+                    ]),
             ]);
     }
 
@@ -98,6 +108,9 @@ class ItemResource extends Resource
                 Tables\Columns\TextColumn::make('category.name')->label('Category')->searchable()->alignCenter(),
                 Tables\Columns\TextColumn::make('initial_stock')->label('Initial Stock')->alignCenter(),
                 Tables\Columns\TextColumn::make('total_stock')->label('Total Stock')->alignCenter(),
+                Tables\Columns\TextColumn::make('createdBy.name')->label('Created By')->alignCenter()
+                    ->badge()
+                    ->color('primary'),
                 Tables\Columns\TextColumn::make('created_at')->label('Created At')->dateTime()->alignCenter(),
                 Tables\Columns\TextColumn::make('updated_at')->label('Updated At')->dateTime()->alignCenter(),
             ])
@@ -121,7 +134,7 @@ class ItemResource extends Resource
                 Action::make('export_pdf')
                     ->label('Cetak Laporan PDF')
                     ->color('danger')
-                    ->icon('heroicon-o-document-arrow-down')
+                    ->icon('heroicon-o-printer')
                     ->action(function () use ($table) {
                         $livewire = $table->getLivewire();
                         $query = $livewire->getFilteredTableQuery();
@@ -174,7 +187,7 @@ class ItemResource extends Resource
     {
         // The relations available for the resource.
         return [
-            
+
         ];
     }
 

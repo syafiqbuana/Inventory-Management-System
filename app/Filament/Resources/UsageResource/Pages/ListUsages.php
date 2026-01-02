@@ -3,8 +3,10 @@
 namespace App\Filament\Resources\UsageResource\Pages;
 
 use App\Filament\Resources\UsageResource;
+use App\Filament\Resources\UsageResource\Widgets\StatsOverview;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+
 
 class ListUsages extends ListRecords
 {
@@ -14,6 +16,13 @@ class ListUsages extends ListRecords
     {
         return [
             Actions\CreateAction::make(),
+        ];
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return[
+            StatsOverview::class,
         ];
     }
 }

@@ -78,7 +78,7 @@ class BalanceResource extends Resource
                 Action::make('export_pdf')
                     ->label('Ekspor ke PDF')
                     ->color('danger')
-                    ->icon('heroicon-o-document-arrow-down')
+                    ->icon('heroicon-o-printer')
                     ->action(function () use ($table) {
                         $livewire = $table->getLivewire();
                         $appliedFilters = $livewire->tableFilters ?? [];

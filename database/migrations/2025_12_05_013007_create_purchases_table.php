@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('purchases', function (Blueprint $table) {
             $table->id();
             $table->unsignedbigInteger('total_amount');
-            $table->string('note');         
+            $table->string('note');
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();        
             $table->timestamps();
         });
     }

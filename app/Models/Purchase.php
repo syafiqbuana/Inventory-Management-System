@@ -18,7 +18,13 @@ class Purchase extends Model
 
     public function getCurrentBalanceAttribute()
     {
-$globalBalance = Balance::find(1); // Ambil record Balance dengan ID 1
+        $globalBalance = Balance::find(1); // Ambil record Balance dengan ID 1
         return $globalBalance->amount ?? 0;
     }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+    
 }

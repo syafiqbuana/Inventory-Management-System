@@ -5,6 +5,7 @@ namespace App\Filament\Resources\IncomeResource\Pages;
 use App\Filament\Resources\IncomeResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use App\Filament\Resources\IncomeResource\Widgets\StatsOverview;
 
 class ListIncomes extends ListRecords
 {
@@ -17,6 +18,13 @@ class ListIncomes extends ListRecords
     {
         return [
             Actions\CreateAction::make(),
+            
         ];
     }
+    protected function getHeaderWidgets(): array
+{
+    return [
+        StatsOverview::class,
+    ];
+}
 }

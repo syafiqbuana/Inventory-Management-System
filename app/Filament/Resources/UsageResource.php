@@ -26,7 +26,7 @@ class UsageResource extends Resource
 {
     protected static ?string $model = Usage::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-arrow-up-tray';
 
     public static function form(Form $form): Form
     {
@@ -118,7 +118,7 @@ class UsageResource extends Resource
                 Action::make('export_pdf')
                     ->label('Ekspor ke PDF')
                     ->color('danger')
-                    ->icon('heroicon-o-document-arrow-down')
+                    ->icon('heroicon-o-printer')
                     ->action(function () use ($table) {
                         $livewire = $table->getLivewire();
                         $query = $livewire->getFilteredTableQuery();

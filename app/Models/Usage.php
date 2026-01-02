@@ -20,4 +20,9 @@ class Usage extends Model
     {
         return $this->belongsTo(Item::class);
     }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 }

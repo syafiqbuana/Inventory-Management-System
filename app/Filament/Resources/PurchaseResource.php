@@ -31,8 +31,8 @@ use Filament\Forms\Set;
 class PurchaseResource extends Resource
 {
     protected static ?string $model = Purchase::class;
-
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    
+    protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
 
     public static function form(Form $form): Form
     {
@@ -176,7 +176,7 @@ class PurchaseResource extends Resource
                     Action::make('export_pdf')
                         ->label('Ekspor ke PDF')
                         ->color('danger')
-                        ->icon('heroicon-o-document-arrow-down')
+                        ->icon('heroicon-o-printer')
                         ->action(function () use ($table) {
                             $query = $table->getLivewire()->getFilteredTableQuery();
                             $records = $query->with('purchaseItems.item')->get();

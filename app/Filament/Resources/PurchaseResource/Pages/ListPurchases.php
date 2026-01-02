@@ -5,6 +5,7 @@ namespace App\Filament\Resources\PurchaseResource\Pages;
 use App\Filament\Resources\PurchaseResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use App\Filament\Resources\PurchaseResource\Widgets\StatsOverview;
 
 class ListPurchases extends ListRecords
 {
@@ -14,6 +15,13 @@ class ListPurchases extends ListRecords
     {
         return [
             Actions\CreateAction::make(),
+        ];
+    }
+
+    protected function getHeaderWidgets(): array
+    {
+        return [
+            StatsOverview::class,
         ];
     }
 }
