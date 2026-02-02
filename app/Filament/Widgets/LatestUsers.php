@@ -14,17 +14,27 @@ class LatestUsers extends BaseWidget
 
     protected int|string|array $columnSpan = 'full';
     protected static ?int $sort = 2;
-    
+
 
     protected function getTableQuery(): Builder
     {
-        return User::query()->latest()->limit(5);
+        $user = Auth::user();
+
+        $query = User::query()
+            ->latest()
+            ->limit(5);
+
+        if ($user && $user->role === 'admin') {
+            $query->where('role', '!=', 'super_admin');
+        }
+
+        return $query;
     }
 
     public static function canView(): bool
     {
         $user = Auth::user();
-        return $user && $user->role ==='admin';
+        return $user && in_array($user->role, ['admin', 'super_admin']);
     }
 
     protected function getTableColumns(): array
@@ -40,7 +50,7 @@ class LatestUsers extends BaseWidget
                 ->label('Email')
                 ->icon('heroicon-o-envelope')
                 ->color('info')
-                ,
+            ,
 
             Tables\Columns\TextColumn::make('created_at')
                 ->label('Dibuat pada')
@@ -60,6 +70,4 @@ class LatestUsers extends BaseWidget
     {
         return false;
     }
-
-
 }

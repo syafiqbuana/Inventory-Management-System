@@ -6,6 +6,9 @@ use App\Filament\Resources\PurchaseResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use App\Filament\Resources\PurchaseResource\Widgets\StatsOverview;
+use App\Models\Purchase;
+use Filament\Notifications\Notification;
+
 
 class ListPurchases extends ListRecords
 {
@@ -21,7 +24,7 @@ class ListPurchases extends ListRecords
     protected function getHeaderWidgets(): array
     {
         return [
-            StatsOverview::class,
+
         ];
     }
 }

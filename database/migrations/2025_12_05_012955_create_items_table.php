@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -16,7 +15,13 @@ return new class extends Migration
             $table->foreignId('category_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name');
             $table->unsignedInteger('initial_stock')->default(0);
-                        $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->unsignedInteger('price');
+            $table->foreignId('initial_period_id')
+                ->nullable()
+                ->constrained('periods')
+                ->restrictOnDelete();
+            $table->foreignId('item_type_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
         });
     }

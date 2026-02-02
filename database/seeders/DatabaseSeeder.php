@@ -16,13 +16,15 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
 
         User::factory()->create([
-            'name' => 'admin',
-            'email' => 'admin@example.com',
+            'name' => 'dev',
+            'email' => 'dev@example.com',
             'password' => bcrypt('12345'),
-            'role' => 'admin',
+            'role' => 'super_admin',
         ]);
         $this->call([
             CategorySeeder::class,
+            ItemTypesSeeder::class,
+            PeriodSeeder::class
         ]);
     }
 }

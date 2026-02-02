@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('item_id')->constrained()->cascadeOnDelete();
             $table->unsignedInteger('qty');
             $table->unsignedBigInteger('unit_price');
+            $table->string('supplier');
             $table->unsignedbigInteger('subtotal');
             $table->timestamps();
         });

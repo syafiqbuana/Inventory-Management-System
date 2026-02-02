@@ -20,7 +20,7 @@ class UserResource extends Resource
 {
     protected static ?string $model = User::class;
     protected static ?string $navigationIcon = 'heroicon-o-user';
-    protected static ?string $navigationGroup= 'Master Data';
+    protected static ?string $navigationGroup = 'Master Data';
 
     protected static ?string $pluralLabel = 'Data User';
 
@@ -29,21 +29,35 @@ class UserResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
-                ->required()
-                ->maxLength(255),
+                    ->required()
+                    ->maxLength(255),
                 Forms\Components\TextInput::make('email')
-                ->email()
-                ->required(),
+                    ->email()
+                    ->required(),
                 Forms\Components\TextInput::make('password')
-                ->password()
-                ->required(),
+                    ->password()
+                    ->required(),
                 Forms\Components\Select::make('role')
-                ->options([
-                    'admin' => 'Admin',
-                    'staff' => 'Staff',
-                ])
-                ->required()
-                ->default('staff'),
+                    ->options(function () {
+
+                        $user = Auth::user();
+
+                        if ($user->role === 'super_admin') {
+                            return [
+                                'admin' => 'Admin',
+                                'staff' => 'Staff',
+                            ];
+                        }
+
+                        if ($user->role === 'admin') {
+                            return [
+                                'staff' => 'Staff',
+                            ];
+                        }
+
+                    })
+                    ->required()
+                    ->default('staff'),
             ]);
     }
 
@@ -51,19 +65,28 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')->searchable(),
-                Tables\Columns\TextColumn::make('email'),
+                Tables\Columns\TextColumn::make('name')->searchable()
+                    ->label('Nama')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('email')
+                    ->color('info')
+                    ->searchable()
+                    ->label('Email'),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime(),
+                    ->label('Dibuat pada')
+                    ->date(),
                 Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime(),
+                    ->label('Diubah pada')
+                    ->date(),
                 Tables\Columns\TextColumn::make('role')
+                    ->label('Role')
                     ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'admin' => 'success',
+                    ->color(fn($state) => match ($state) {
+                        'super_admin' => 'success',
+                        'admin' => 'primary',
                         'staff' => 'warning',
                     })
-                    ,
+                ,
             ])
             ->filters([
                 //
@@ -84,12 +107,31 @@ class UserResource extends Resource
             //
         ];
     }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = Auth::user();
+
+        if ($user?->role === 'super_admin') {
+            return $query;
+        }
+
+        if ($user?->role === 'admin') {
+            return $query->whereIn('role', ['admin', 'staff']);
+        }
+
+        return $query->whereRaw('1 = 0'); // staff see nothing
+    }
+
+
     public static function canViewAny(): bool
     {
         $user = Auth::user();
-        return $user && $user->role ==='admin';
 
+        return $user && in_array($user->role, ['admin', 'super_admin']);
     }
+
     public static function getPages(): array
     {
         return [

@@ -19,6 +19,7 @@ class CategoryResource extends Resource
     protected static ?string $model = Category::class;
     protected static ?string $navigationGroup = 'Master Data';
 
+    protected static ?string $pluralModelLabel = 'Kategori Barang';
     protected static ?string $navigationIcon = 'heroicon-o-list-bullet';
 
     public static function form(Form $form): Form
@@ -37,6 +38,9 @@ class CategoryResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')->label('Name')->alignCenter()
                     ->searchable(),
+                Tables\Columns\TextColumn::make('items_count')->label('Jumlah Item')->alignCenter()
+                    ->badge()
+                    ->color('info'),
                 Tables\Columns\TextColumn::make('created_at')->label('Created At')->dateTime()->alignCenter(),
                 Tables\Columns\TextColumn::make('updated_at')->label('Updated At')->dateTime()->alignCenter()
             ])
@@ -45,6 +49,11 @@ class CategoryResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+            ])
+            ->emptyStateActions([
+                Tables\Actions\CreateAction::make()
+                    ->label('Buat Kategori Baru')
+                    ->icon('heroicon-m-plus'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -56,8 +65,14 @@ class CategoryResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+        ->withCount('items');
     }
 
     public static function getPages(): array

@@ -8,6 +8,8 @@ use App\Models\Item;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use App\Models\ItemType;
+use App\Models\Period;
 use Filament\Tables;
 use Illuminate\Support\Facades\App;
 use Filament\Tables\Actions\Action;
@@ -19,12 +21,17 @@ use Filament\Tables\Table;
 use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Tables\Filters\Filter;
+
 
 class ItemResource extends Resource
 {
     protected static ?string $model = Item::class;
 
-    protected static ?string $navigationGroup = 'Master Data';
+
+    protected static ?string $navigationLabel = 'Stok Awal & Data Barang';
+
+    protected static ?string $pluralModelLabel = 'Stok Awal & Data Barang';
 
     protected static ?string $navigationIcon = 'heroicon-o-archive-box';
 
@@ -61,9 +68,17 @@ class ItemResource extends Resource
                                 Forms\Components\TextInput::make('initial_stock')
                                     ->label('Stok Awal')
                                     ->required()
-                                    ->default(0)
+                                    ->minValue(1)
                                     ->numeric(),
-
+                                Forms\Components\TextInput::make('price')
+                                    ->label('Harga')
+                                    ->required()
+                                    ->minValue(1)
+                                    ->numeric(),
+                                Forms\Components\Select::make('item_type_id')
+                                    ->label('Satuan Barang')
+                                    ->options(ItemType::pluck('name', 'id'))
+                                    ->searchable()
                             ])
                             ->columnSpanFull()
                             ->visible(fn($livewire) => $livewire instanceof Pages\CreateItem),
@@ -93,6 +108,18 @@ class ItemResource extends Resource
                             ->disabled()
                             ->dehydrated(false)
                             ->visible(fn($livewire) => $livewire instanceof Pages\EditItem),
+                        Forms\Components\TextInput::make('price')
+                            ->label('Harga')
+                            ->required()
+                            ->default(0)
+                            ->numeric()
+                            ->visible(fn($livewire) => $livewire instanceof Pages\EditItem),
+                        Forms\Components\Select::make('item_type_id')
+                            ->label('Satuan')
+                            ->options(ItemType::pluck('name', 'id'))
+                            ->searchable()
+                            ->required()
+                            ->visible(fn($livewire) => $livewire instanceof Pages\EditItem),
                         Forms\Components\Hidden::make('created_by')
                             ->default(Auth::user()->id)
                             ->dehydrated(true),
@@ -103,32 +130,65 @@ class ItemResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->emptyStateHeading('Tidak Ada Barang')
             ->columns([
-                Tables\Columns\TextColumn::make('name')->label('Name')->searchable()->alignCenter(),
-                Tables\Columns\TextColumn::make('category.name')->label('Category')->searchable()->alignCenter(),
-                Tables\Columns\TextColumn::make('initial_stock')->label('Initial Stock')->alignCenter(),
-                Tables\Columns\TextColumn::make('total_stock')->label('Total Stock')->alignCenter(),
-                Tables\Columns\TextColumn::make('createdBy.name')->label('Created By')->alignCenter()
+                Tables\Columns\TextColumn::make('name')->label('Nama Barang')->searchable()->alignCenter(),
+                Tables\Columns\TextColumn::make('category.name')->label('Kategori')->searchable()->alignCenter(),
+                Tables\Columns\TextColumn::make('initial_stock')->label('Stok Awal')->alignCenter()
+                    //jika initial stock nya 0 maka tampilkan -
+                    ->formatStateUsing(fn($state) => $state == 0 ? '-' : $state),
+                Tables\Columns\TextColumn::make('stock')
+                    ->label('Total Stock')
+                    ->alignCenter()
+                    ->state(
+                        fn(Item $record) =>
+                        $record->stockForPeriod(static::$activePeriodId)
+                    ),
+
+                Tables\Columns\TextColumn::make('display_price')
+                    ->label('Harga')
+                    ->badge()
+                    ->color('info')
+                    ->getStateUsing(function ($record) {
+                        return $record->price != 0
+                            ? $record->price
+                            : $record->purchaseItems
+                                ->sortByDesc('created_at')
+                                ->first()
+                                    ?->unit_price ?? 0;
+                    })
+                    ->formatStateUsing(
+                        fn($state) =>
+                        'Rp ' . number_format((int) $state, 0, ',', '.')
+                    )
+                ,
+                //show item type
+                Tables\Columns\TextColumn::make('itemType.name')->label('Satuan')->alignCenter(),
+                Tables\Columns\TextColumn::make('initialPeriod.year')->label('Periode')->alignCenter(),
+                Tables\Columns\TextColumn::make('createdBy.name')->label('Dibuat Oleh')->alignCenter()
                     ->badge()
                     ->color('primary'),
-                Tables\Columns\TextColumn::make('created_at')->label('Created At')->dateTime()->alignCenter(),
-                Tables\Columns\TextColumn::make('updated_at')->label('Updated At')->dateTime()->alignCenter(),
+
             ])
             ->filters([
-
+                Filter::make('empty_items')
+                    ->label('Barang Baru')
+                    ->query(fn (Builder $query)=>
+                        $query->where('price', 0)
+                        ->where('initial_stock', 0))
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\ViewAction::make()
                     ->label('View Details')
                     ->url(fn(Item $record) => PurchaseResource::getUrl('index', ['filters' => ['purchaseItems.item_id' => $record->id]])),
-
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
+            
 
             ->headerActions([
                 Action::make('export_pdf')
@@ -189,6 +249,39 @@ class ItemResource extends Resource
         return [
 
         ];
+    }
+
+protected static ?int $activePeriodId = null;
+
+public static function getEloquentQuery(): Builder
+{
+    if (static::$activePeriodId === null) {
+        static::$activePeriodId = Period::query()
+            ->where('is_closed', false)
+            ->value('id');
+    }
+
+    return parent::getEloquentQuery()
+        ->with(['category', 'createdBy', 'itemType'])
+        ->withSum([
+            'purchaseItems as purchased_qty' => fn ($q) =>
+                $q->whereHas('purchase', fn ($p) =>
+                    $p->where('period_id', static::$activePeriodId)
+                ),
+        ], 'qty')
+        ->withSum([
+            'usageItems as used_qty' => fn ($q) =>
+                $q->whereHas('usage', fn ($u) =>
+                    $u->where('period_id', static::$activePeriodId)
+                ),
+        ], 'qty')
+        // 🔹 ADD PRIMARY FILTER HERE
+;
+}
+
+    public static function boot(): void
+    {
+        static::$activePeriodId = Period::active()->id;
     }
 
     public static function getPages(): array

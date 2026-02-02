@@ -1,274 +1,75 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <title>Laporan Pembelian</title>
     <meta charset="UTF-8">
     <style>
-        @page {
-            margin: 2cm 1.5cm;
-            size: A4;
-        }
-        
-        body { 
-            font-family: sans-serif; 
-            margin: 0;
-            padding: 0;
-        }
-        
-        .header { 
-            text-align: center; 
-            margin-bottom: 20px; 
-            border-bottom: 2px solid #333;
-            padding-bottom: 10px;
-        }
-        .header h1 { 
-            margin: 0; 
-            font-size: 20px;
-            text-transform: uppercase;
-        }
-        .header p {
-            margin: 5px 0;
-            font-size: 12px;
-            color: #666;
-        }
-        
-        .filter-info { 
-            margin-bottom: 15px; 
-            padding: 10px; 
-            border: 1px solid #ccc; 
-            background-color: #f9f9f9;
-            page-break-inside: avoid;
-        }
-        .filter-info p { 
-            margin: 5px 0; 
-            font-size: 12px; 
-        }
-        .filter-info strong {
-            color: #333;
-        }
-        .filter-info ul { 
-            margin: 5px 0 0 20px; 
-            padding: 0; 
-        }
-        .filter-info li { 
-            list-style-type: disc; 
-            margin-bottom: 3px; 
-            font-size: 12px;
-        }
-        
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            margin-top: 10px;
-            page-break-inside: auto;
-        }
-        
-        thead {
-            display: table-header-group; /* Repeat header di setiap halaman */
-        }
-        
-        tfoot {
-            display: table-footer-group; /* Footer tetap di akhir */
-        }
-        
-        tr {
-            page-break-inside: avoid;
-            page-break-after: auto;
-        }
-        
-        th, td { 
-            border: 1px solid #333; 
-            padding: 8px; 
-            text-align: left; 
-            font-size: 11px; 
-        }
-        th { 
-            background-color: #e0e0e0; 
-            text-align: center;
-            font-weight: bold;
-            color: #333;
-        }
-        .right { 
-            text-align: right; 
-        }
-        .center { 
-            text-align: center; 
-        }
-        
-        .item-list {
-            margin: 0;
-            padding: 0;
-            list-style: none;
-        }
-        .item-list li {
-            padding: 2px 0;
-            font-size: 10px;
-            border-bottom: 1px dotted #ddd;
-        }
-        .item-list li:last-child {
-            border-bottom: none;
-        }
-        .item-name {
-            font-weight: bold;
-            color: #333;
-        }
-        .item-detail {
-            color: #666;
-            font-size: 9px;
-        }
-        
-        tfoot tr.total {
-            background-color: #f5f5f5;
-            font-weight: bold;
-        }
-        
-        tfoot tr.balance {
-            background-color: #e8f4f8;
-            font-weight: bold;
-            border-top: 2px solid #333;
-        }
-        
-        .summary {
-            margin-top: 15px;
-            padding: 10px;
-            background-color: #f0f0f0;
-            border: 1px solid #ccc;
-            page-break-inside: avoid;
-        }
-        .summary p {
-            margin: 5px 0;
-            font-size: 12px;
-        }
-        .summary strong {
-            font-size: 13px;
-        }
-        
-        .footer {
-            margin-top: 20px;
-            text-align: right;
-            font-size: 10px;
-            color: #666;
-            page-break-inside: avoid;
-        }
-        @media print {
-            body {
-                margin: 0;
-            }
-            .header, .filter-info {
-                page-break-after: avoid;
-            }
-            .summary, .footer {
-                page-break-before: avoid;
-            }
-        }
+        @page { size: A4 landscape; margin: 15mm 10mm; }
+        body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 9px; line-height: 1.4; color: #333; }
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+        .header h1 { font-size: 14px; text-transform: uppercase; margin: 0; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #000; padding: 5px; }
+        th { background-color: #f2f2f2; font-weight: bold; text-align: center; text-transform: uppercase; font-size: 8px; }
+        .category-header { background-color: #e2e8f0; font-weight: bold; font-size: 10px; padding: 6px; }
+        .total-row { background-color: #f8fafc; font-weight: bold; }
+        .grand-total { background-color: #cbd5e1; font-weight: bold; font-size: 10px; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>LAPORAN DATA PEMBELIAN</h1>
-        <p>Tanggal Cetak: {{ now()->translatedFormat('d F Y H:i:s') }}</p>
-    </div>
-    
-    @if (!empty($keteranganFilter))
-        <div class="filter-info">
-            <strong>Filter yang Diterapkan:</strong>
-            <ul>
-                @foreach ($keteranganFilter as $keterangan)
-                    <li>{!! str_replace(['**', '*'], ['<b>', '</b>'], $keterangan) !!}</li>
-                @endforeach
-            </ul>
-        </div>
-    @else
-        <div class="filter-info">
-            <p><strong>Tidak ada filter yang diterapkan.</strong> Menampilkan semua data pembelian.</p>
-        </div>
-    @endif
-    
-    <table>
-        <thead>
+
+<div class="header">
+    <h1>Laporan Detail Pengadaan Barang Per Kategori</h1>
+    <p style="margin: 5px 0 0 0;">Tanggal Cetak: {{ $generatedAt }}</p>
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th style="width: 4%;">No</th>
+            <th style="width: 10%;">Tanggal</th>
+            <th style="width: 25%;">Nama Barang</th>
+            <th style="width: 25%;">Supplier & Catatan</th>
+            <th style="width: 8%;">Jumlah</th>
+            <th style="width: 13%;">Harga Satuan</th>
+            <th style="width: 15%;">Subtotal</th>
+        </tr>
+    </thead>
+    <tbody>
+        @php $grandTotal = 0; @endphp
+        @foreach ($reportData as $categoryName => $data)
             <tr>
-                <th style="width: 5%;">No.</th>
-                <th style="width: 8%;">ID</th>
-                <th style="width: 20%;">Catatan</th>
-                <th style="width: 15%;">Total Jumlah</th>
-                <th style="width: 37%;">Items Dibeli</th>
-                <th style="width: 15%;">Tanggal Pembelian</th>
+                <td colspan="7" class="category-header">KATEGORI: {{ strtoupper($categoryName) }}</td>
             </tr>
-        </thead>
-        <tbody>
-            @php 
-                $no = 1;
-                $grandTotal = 0;
-            @endphp
-            
-            @forelse ($records as $purchase)
+            @foreach ($data['items'] as $index => $item)
                 <tr>
-                    <td class="center">{{ $no++ }}</td>
-                    <td class="center">{{ $purchase->id }}</td>
-                    <td>{{ $purchase->note ?? '-' }}</td>
-                    <td class="right">Rp {{ number_format($purchase->total_amount, 0, ',', '.') }}</td>
+                    <td class="text-center">{{ $index + 1 }}</td>
+                    <td class="text-center">{{ \Carbon\Carbon::parse($item['date'])->format('d/m/Y') }}</td>
+                    <td>{{ $item['item_name'] }}</td>
                     <td>
-                        <ul class="item-list">
-                            @foreach ($purchase->purchaseItems as $item)
-                                <li>
-                                    <span class="item-name">{{ $item->item->name ?? 'N/A' }}</span><br>
-                                    <span class="item-detail">
-                                        {{ $item->qty }} unit × Rp {{ number_format($item->unit_price, 0, ',', '.') }} 
-                                        = Rp {{ number_format($item->qty * $item->unit_price, 0, ',', '.') }}
-                                    </span>
-                                </li>
-                            @endforeach
-                        </ul>
+                        <strong>{{ $item['supplier'] }}</strong><br>
+                        <small style="color: #666;">{{ $item['note'] }}</small>
                     </td>
-                    <td class="center">{{ \Carbon\Carbon::parse($purchase->created_at)->translatedFormat('d F Y') }}</td>
+                    <td class="text-center">{{ number_format($item['qty'], 0, ',', '.') }}</td>
+                    <td class="text-right">Rp {{ number_format($item['unit_price'], 0, ',', '.') }}</td>
+                    <td class="text-right">Rp {{ number_format($item['subtotal'], 0, ',', '.') }}</td>
                 </tr>
-                @php
-                    $grandTotal += $purchase->total_amount;
-                @endphp
-            @empty
-                <tr>
-                    <td colspan="6" class="center" style="padding: 20px; color: #999;">
-                        Tidak ada data pembelian yang tersedia
-                    </td>
-                </tr>
-            @endforelse
-        </tbody>
-        
-        @if ($records->count() > 0)
-            <tfoot>
-                {{-- Baris 1: Total Pembelian Keseluruhan --}}
-                <tr class="total">
-                    <th colspan="3" class="right">TOTAL PEMBELIAN:</th>
-                    <th class="right">Rp {{ number_format($grandTotal, 0, ',', '.') }}</th>
-                    <th colspan="2"></th>
-                </tr>
-                
-                {{-- Baris 2: SISA SALDO GLOBAL --}}
-                <tr class="balance">
-                    <th colspan="5" class="right">SISA SALDO GLOBAL:</th>
-                    <th class="right">
-                        @php
-                            $balance = \App\Models\Balance::first();
-                            $currentBalance = $balance->amount ?? 0;
-                        @endphp
-                        Rp {{ number_format($currentBalance, 0, ',', '.') }}
-                    </th>
-                </tr>
-            </tfoot>
-        @endif
-    </table>
-    
-    @if ($records->count() > 0)
-        <div class="summary">
-            <p><strong>Ringkasan:</strong></p>
-            <p>Total Transaksi Pembelian: {{ number_format($records->count(), 0, ',', '.') }} transaksi</p>
-            <p>Total Nilai Pembelian: Rp {{ number_format($grandTotal, 0, ',', '.') }}</p>
-            <p>Sisa Saldo Global: Rp {{ number_format($currentBalance ?? 0, 0, ',', '.') }}</p>
-        </div>
-    @endif
-    
-    <div class="footer">
-        <p>Dokumen ini dihasilkan secara otomatis oleh sistem</p>
-    </div>
+            @endforeach
+            <tr class="total-row">
+                <td colspan="6" class="text-right">Subtotal Kategori {{ $categoryName }}:</td>
+                <td class="text-right">Rp {{ number_format($data['total_category_amount'], 0, ',', '.') }}</td>
+            </tr>
+            @php $grandTotal += $data['total_category_amount']; @endphp
+        @endforeach
+    </tbody>
+    <tfoot>
+        <tr class="grand-total">
+            <td colspan="6" class="text-right">TOTAL KESELURUHAN (SEMUA KATEGORI):</td>
+            <td class="text-right">Rp {{ number_format($grandTotal, 0, ',', '.') }}</td>
+        </tr>
+    </tfoot>
+</table>
+
 </body>
 </html>

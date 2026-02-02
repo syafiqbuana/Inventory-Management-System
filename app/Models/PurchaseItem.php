@@ -10,8 +10,8 @@ class PurchaseItem extends Model
         'purchase_id',
         'item_id',
         'qty',
-
         'unit_price',
+        'supplier',
         'subtotal',
     ];
 

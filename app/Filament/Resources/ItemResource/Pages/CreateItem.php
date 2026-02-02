@@ -37,7 +37,7 @@ class CreateItem extends CreateRecord
     protected function getCreatedNotificationTitle(): ?string
     {
         $count = count($this->data['new_items'] ?? []);
-        return $count > 0 ? "{$count} Items created successfully!" : "Item creation successful.";
+        return $count > 0 ? "{$count} Barang berhasil dibuat!" : "Barang baru ditambahkan.";
     }
 
     
