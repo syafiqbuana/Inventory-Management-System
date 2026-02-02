@@ -59,7 +59,6 @@ Sistem informasi manajemen inventaris untuk perusahaan/instansi yang komprehensi
 ### 6. **Laporan & Export**
 - ✅ Laporan Mutasi Stok (detail pembelian, penggunaan, stok)
 - ✅ Export ke PDF
-- ✅ Export ke Excel
 - ✅ Filter laporan berdasarkan periode & kategori
 
 ### 7. **Dashboard**
@@ -67,12 +66,6 @@ Sistem informasi manajemen inventaris untuk perusahaan/instansi yang komprehensi
 - ✅ Visualisasi data inventaris
 - ✅ Summary stok per kategori
 - ✅ Info pembelian & penggunaan terkini
-
-### 8. **Import/Export Data**
-- ✅ Import data item dari file Excel/CSV
-- ✅ Validasi data import
-- ✅ Log import history dengan error tracking
-- ✅ Export data dalam berbagai format
 
 ### 9. **Manajemen Master Data**
 - ✅ Kategori Item (Category)
