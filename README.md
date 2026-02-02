@@ -1,66 +1,356 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Manajemen Inventaris
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Sistem informasi manajemen inventaris untuk perusahaan/instansi yang komprehensif dengan fitur tracking stok, laporan mutasi, dan periode pengelolaan inventaris.
 
-## About Laravel
+## 📋 Daftar Isi
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- [Tentang Aplikasi](#tentang-aplikasi)
+- [Fitur Utama](#fitur-utama)
+- [Teknologi yang Digunakan](#teknologi-yang-digunakan)
+- [Requirement](#requirement)
+- [Instalasi](#instalasi)
+- [Struktur Database](#struktur-database)
+- [Panduan Penggunaan](#panduan-penggunaan)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🎯 Tentang Aplikasi
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+**Manajemen Inventaris** adalah sistem web berbasis Laravel yang dirancang untuk membantu perusahaan atau instansi dalam mengelola dan melacak inventaris/aset mereka. Aplikasi ini menyediakan dashboard interaktif, laporan mutasi terperinci, dan tracking stok real-time.
 
-## Learning Laravel
+### Target User
+- **Staf Inventaris** - Menginput dan memperbarui data inventaris
+- **Manager** - Melihat laporan dan analisis inventaris
+- **Administrator** - Mengelola user dan konfigurasi sistem
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## ✨ Fitur Utama
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 1. **Manajemen Item/Inventaris**
+- ✅ Input data item baru dengan kategori dan satuan
+- ✅ Edit/update informasi item
+- ✅ Hapus item dari sistem
+- ✅ Search dan filter item berdasarkan kategori, periode, dll
 
-## Laravel Sponsors
+### 2. **Tracking Stok & Mutasi**
+- ✅ Pencatatan stok awal per periode
+- ✅ Tracking pembelian (Purchase)
+- ✅ Tracking penggunaan/pemakaian (Usage)
+- ✅ Perhitungan stok otomatis: `Stok = Stok Awal + Pembelian - Penggunaan`
+- ✅ Laporan Mutasi berdasarkan periode
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 3. **Manajemen Pembelian**
+- ✅ Input pembelian item dengan harga satuan
+- ✅ Multi-item purchases dalam satu transaksi
+- ✅ Tracking supplier dan tanggal pembelian
+- ✅ Riwayat pembelian per item
 
-### Premium Partners
+### 4. **Manajemen Penggunaan/Pemakaian**
+- ✅ Pencatatan penggunaan item
+- ✅ Multi-item usage dalam satu transaksi
+- ✅ Tracking departemen/bagian yang menggunakan
+- ✅ Riwayat penggunaan per item
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+### 5. **Manajemen Periode**
+- ✅ Buat periode pengelolaan baru (per tahun/bulan)
+- ✅ Set periode aktif untuk operasional
+- ✅ Laporan per periode spesifik
+- ✅ Arsip periode lama
 
-## Contributing
+### 6. **Laporan & Export**
+- ✅ Laporan Mutasi Stok (detail pembelian, penggunaan, stok)
+- ✅ Export ke PDF
+- ✅ Export ke Excel
+- ✅ Filter laporan berdasarkan periode & kategori
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 7. **Dashboard**
+- ✅ Widget Item Terbaru
+- ✅ Visualisasi data inventaris
+- ✅ Summary stok per kategori
+- ✅ Info pembelian & penggunaan terkini
 
-## Code of Conduct
+### 8. **Import/Export Data**
+- ✅ Import data item dari file Excel/CSV
+- ✅ Validasi data import
+- ✅ Log import history dengan error tracking
+- ✅ Export data dalam berbagai format
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 9. **Manajemen Master Data**
+- ✅ Kategori Item (Category)
+- ✅ Satuan Item (Item Type)
+- ✅ User & Role Management
+- ✅ Audit Trail (siapa membuat/mengubah data)
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 🛠️ Teknologi yang Digunakan
 
-## License
+| Teknologi | Versi | Fungsi |
+|-----------|-------|--------|
+| **PHP** | 8.2+ | Server-side language |
+| **Laravel** | 11.0 | Web framework |
+| **MySQL** | 5.7+ | Database management |
+| **Filament** | 3.3 | Admin panel & UI components |
+| **DomPDF** | 3.1 | Generate PDF reports |
+| **Laravel Tinker** | 2.9 | Interactive shell |
+| **Composer** | Latest | Package manager |
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Development Tools
+- Laravel Debugbar - Debug toolbar
+- PHPUnit - Unit testing
+- Faker - Generate fake data
+- Laravel Pint - Code formatting
+
+---
+
+## 📋 Requirement
+
+### Sistem Operasi
+- Windows / Linux / macOS
+
+### Software yang Diperlukan
+- **PHP** >= 8.2
+- **Composer** (latest)
+- **MySQL** 5.7+ atau MariaDB 10.3+
+- **Node.js** & **npm** (untuk aset frontend)
+
+### Web Server
+- Apache (dengan mod_rewrite)
+- Nginx
+- Built-in PHP server (untuk development)
+
+---
+
+## 🚀 Instalasi
+
+### 1. Clone Repository
+```bash
+cd d:\laragon\www
+git clone <repository-url> inventaris2
+cd inventaris2
+```
+
+### 2. Install Dependencies
+```bash
+composer install
+```
+
+### 3. Setup Environment
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+
+### 4. Konfigurasi Database
+Edit file `.env`:
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=db_inventaris2
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+Buat database:
+```bash
+mysql -u root -e "CREATE DATABASE db_inventaris2;"
+```
+
+### 5. Migrasi Database
+```bash
+php artisan migrate
+```
+
+### 6. Seed Data (Opsional)
+```bash
+php artisan db:seed
+```
+
+### 7. Setup Filament
+```bash
+php artisan filament:install
+```
+
+### 8. Jalankan Aplikasi
+```bash
+php artisan serve
+```
+
+Akses di: `http://localhost:8000`
+
+---
+
+## 🗄️ Struktur Database
+
+### Tabel Utama
+
+#### **users**
+- Menyimpan data pengguna sistem
+- Fields: id, name, email, password, created_at, updated_at
+
+#### **items**
+- Data item/inventaris
+- Fields: id, name, category_id, item_type_id, initial_stock, price, initial_period_id, created_by, created_at, updated_at
+
+#### **categories**
+- Kategori item (Elektronik, Furniture, ATK, dll)
+- Fields: id, name, description, created_at, updated_at
+
+#### **item_types**
+- Satuan item (Pcs, Box, Set, Meter, dll)
+- Fields: id, name, created_at, updated_at
+
+#### **periods**
+- Periode pengelolaan (Tahun 2024, 2025, dll)
+- Fields: id, year, is_active, start_date, end_date, created_at, updated_at
+
+#### **purchases**
+- Transaksi pembelian
+- Fields: id, period_id, purchase_date, notes, created_by, created_at, updated_at
+
+#### **purchase_items**
+- Detail item dalam pembelian
+- Fields: id, purchase_id, item_id, quantity, unit_price, created_at, updated_at
+
+#### **usages**
+- Transaksi penggunaan/pemakaian
+- Fields: id, period_id, usage_date, department, notes, created_by, created_at, updated_at
+
+#### **usage_items**
+- Detail item dalam penggunaan
+- Fields: id, usage_id, item_id, quantity, created_at, updated_at
+
+#### **period_stocks**
+- Snapshot stok per periode (untuk tracking history)
+- Fields: id, period_id, item_id, initial_stock, purchased_qty, used_qty, created_at, updated_at
+
+---
+
+## 📖 Panduan Penggunaan
+
+### Alur Umum Penggunaan
+
+#### 1. **Setup Awal**
+```
+Login → Buat Periode → Input Master Data (Kategori, Satuan) 
+→ Input Item → Set Stok Awal
+```
+
+#### 2. **Operasional Harian**
+```
+Input Pembelian → Update Stok Otomatis
+Input Penggunaan → Update Stok Otomatis
+```
+
+#### 3. **Laporan**
+```
+View Laporan Mutasi → Filter Periode & Kategori → Export PDF/Excel
+```
+
+### Contoh Workflow Lengkap
+
+**Scenario:** Mengelola inventaris kantor untuk tahun 2025
+
+1. **Buat Periode Baru**
+   - Navigasi ke: Master Data → Periode
+   - Klik "Tambah Periode"
+   - Tahun: 2025, Set sebagai Active
+   - Simpan
+
+2. **Input Kategori & Satuan**
+   - Masuk ke: Master Data → Kategori
+   - Input: Elektronik, Furniture, ATK, dll
+   - Masuk ke: Master Data → Satuan
+   - Input: Pcs, Box, Set, Meter, dll
+
+3. **Input Item**
+   - Navigasi ke: Inventaris → Item
+   - Klik "Tambah Item"
+   - Isi: Nama, Kategori, Satuan, Stok Awal, Harga
+   - Simpan
+
+4. **Input Pembelian**
+   - Navigasi ke: Transaksi → Pembelian
+   - Klik "Tambah Pembelian"
+   - Pilih item, qty, harga satuan
+   - Simpan → Stok otomatis terupdate
+
+5. **Input Penggunaan**
+   - Navigasi ke: Transaksi → Penggunaan
+   - Klik "Tambah Penggunaan"
+   - Pilih item, qty, departemen
+   - Simpan → Stok otomatis terupdate
+
+6. **Buat Laporan**
+   - Navigasi ke: Laporan → Mutasi Stok
+   - Filter: Periode, Kategori, Tanggal
+   - Klik "Export PDF" atau "Export Excel"
+
+---
+
+## 📊 Entitas & Relationship
+
+```
+User (1) ──────→ (Many) Items
+User (1) ──────→ (Many) Purchases
+User (1) ──────→ (Many) Usages
+
+Category (1) ──────→ (Many) Items
+ItemType (1) ──────→ (Many) Items
+Period (1) ──────→ (Many) Items
+Period (1) ──────→ (Many) Purchases
+Period (1) ──────→ (Many) Usages
+
+Purchase (1) ──────→ (Many) PurchaseItems
+Usage (1) ──────→ (Many) UsageItems
+
+Item (1) ──────→ (Many) PurchaseItems
+Item (1) ──────→ (Many) UsageItems
+Item (1) ──────→ (Many) PeriodStocks
+```
+
+---
+
+## 🔑 Fitur Keamanan
+
+- ✅ Authentication & Authorization
+- ✅ Role-based Access Control (RBAC)
+- ✅ Password hashing dengan bcrypt
+- ✅ Audit trail (created_by, updated_at)
+- ✅ Session management di database
+- ✅ CSRF protection
+
+---
+
+## 🐛 Troubleshooting
+
+### Error: "No active period found"
+**Solusi:** Pastikan ada minimal satu periode yang aktif di Master Data → Periode
+
+### Stok tidak terupdate
+**Solusi:** Pastikan pembelian/penggunaan sudah di-submit dan periode-nya aktif
+
+### Import file gagal
+**Solusi:** Pastikan format file Excel sesuai dengan template, dan data tidak ada yang duplikat
+
+---
+
+## 📞 Support & Kontribusi
+
+Untuk pertanyaan atau kontribusi, silakan hubungi tim development.
+
+---
+
+## 📄 Lisensi
+
+MIT License - Bebas digunakan untuk keperluan komersial maupun non-komersial.
+
+---
+
+## 📅 Changelog
+
+- **v1.0.0** (Februari 2026) - Initial Release
+  - Manajemen Item, Pembelian, Penggunaan
+  - Laporan Mutasi Stok
+  - Dashboard & Analytics
+  - Import/Export Data
