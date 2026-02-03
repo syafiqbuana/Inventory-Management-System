@@ -154,8 +154,10 @@ class PurchaseResource extends Resource
                                         Forms\Components\Grid::make(1)
                                             ->schema([
                                                 TextInput::make('new_item_name')->label('Nama Barang Baru'),
-                                                Select::make('new_item_category')->label('Kategori')->options(Category::pluck('name', 'id')),
-                                                Select::make('new_item_type')->label('Satuan')->options(ItemType::pluck('name', 'id')),
+                                                Select::make('new_item_category')->label('Kategori')
+                                                    ->searchable()->options(Category::pluck('name', 'id')),
+                                                Select::make('new_item_type')->label('Satuan')
+                                                ->searchable()->options(ItemType::pluck('name', 'id')),
                                             ]),
                                     ])
                                     ->headerActions([
@@ -252,8 +254,8 @@ class PurchaseResource extends Resource
                                                 ->action('saveNewPurchaseItems'),
                                         ])->visible(fn($livewire) => $livewire instanceof Pages\CreatePurchase),
                                     ])
-                                    
-                                    
+
+
                             ])->visible(fn($livewire) => $livewire instanceof Pages\CreatePurchase),
                     ]),
             ]);
@@ -386,8 +388,8 @@ class PurchaseResource extends Resource
             ])
             ->actions([
                 Tables\Actions\ViewAction::make()
-                ->label('Lihat Detail')
-                ->color('info'),
+                    ->label('Lihat Detail')
+                    ->color('info'),
                 Tables\Actions\EditAction::make()
                     ->disabled(fn(Purchase $record) => $record->period->is_closed),
                 Tables\Actions\DeleteAction::make()
@@ -429,14 +431,14 @@ class PurchaseResource extends Resource
     }
 
     public static function getEloquentQuery(): Builder
-{
-    return parent::getEloquentQuery()
-        ->with([
-            'createdBy',
-            'period',
-            'purchaseItems.item.category',
-        ]);
-}
+    {
+        return parent::getEloquentQuery()
+            ->with([
+                'createdBy',
+                'period',
+                'purchaseItems.item.category',
+            ]);
+    }
 
 
     public static function getPages(): array

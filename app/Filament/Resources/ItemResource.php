@@ -173,9 +173,9 @@ class ItemResource extends Resource
             ->filters([
                 Filter::make('empty_items')
                     ->label('Barang Baru')
-                    ->query(fn (Builder $query)=>
+                    ->query(fn(Builder $query) =>
                         $query->where('price', 0)
-                        ->where('initial_stock', 0))
+                            ->where('initial_stock', 0))
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -188,52 +188,40 @@ class ItemResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ])
-            
+
 
             ->headerActions([
                 Action::make('export_pdf')
                     ->label('Cetak Laporan PDF')
-                    ->color('danger')
+                    ->color('info')
                     ->icon('heroicon-o-printer')
-                    ->action(function () use ($table) {
+                    ->url(function () use ($table) {
                         $livewire = $table->getLivewire();
-                        $query = $livewire->getFilteredTableQuery();
                         $appliedFilters = $livewire->tableFilters ?? [];
-                        $keteranganFilter = [];
-                        $records = $query->with('category')->get();
 
+                        // Build query parameters
+                        $params = [];
+
+                        // 1. Filter Kategori
                         if (isset($appliedFilters['category']['value']) && $appliedFilters['category']['value'] !== null) {
-                            $categoryId = $appliedFilters['category']['value'];
-                            $categoryName = Category::find($categoryId)->name ?? 'Tidak Ditemukan';
-                            $keteranganFilter[] = 'Filter Kategori: ' . $categoryName;
+                            $params['category'] = $appliedFilters['category']['value'];
                         }
 
+                        // 2. Filter Rentang Tanggal
                         if (isset($appliedFilters['created_at']['created_at'])) {
                             $dateRangeString = $appliedFilters['created_at']['created_at'];
-
                             if ($dateRangeString) {
-                                $dates = explode(' - ', $dateRangeString);
-                                if (count($dates) === 2) {
-                                    $start = trim($dates[0]);
-                                    $end = trim($dates[1]);
-
-                                    $formattedStart = \Carbon\Carbon::createFromFormat('d/m/Y', $start)->translatedFormat('d F Y');
-                                    $formattedEnd = \Carbon\Carbon::createFromFormat('d/m/Y', $end)->translatedFormat('d F Y');
-
-                                    $keteranganFilter[] = 'Filter Tanggal Dibuat: Dari <b>' . $formattedStart . '</b> sampai <b>' . $formattedEnd . '</b>';
-                                }
+                                $params['date_range'] = $dateRangeString;
                             }
                         }
 
-                        $pdf = App::make('dompdf.wrapper');
-                        $pdf->loadView('pdf.item_report', compact('records', 'keteranganFilter'));
-
-                        $fileName = 'Laporan_Data_Barang_' . now()->format('Ymd_His') . '.pdf';
-
-                        return response()->streamDownload(function () use ($pdf, $fileName) {
-                            echo $pdf->stream();
-                        }, $fileName);
-                    }),
+                        return route('item.report.export', $params);
+                    })
+                    ->openUrlInNewTab()
+                    ->requiresConfirmation()
+                    ->modalHeading('Cetak Laporan PDF')
+                    ->modalDescription('Laporan akan dibuka di tab baru. Pastikan browser Anda tidak memblokir pop-up.')
+                    ->modalSubmitActionLabel('Lanjutkan'),
             ]);
 
     }
@@ -251,33 +239,37 @@ class ItemResource extends Resource
         ];
     }
 
-protected static ?int $activePeriodId = null;
+    protected static ?int $activePeriodId = null;
 
-public static function getEloquentQuery(): Builder
-{
-    if (static::$activePeriodId === null) {
-        static::$activePeriodId = Period::query()
-            ->where('is_closed', false)
-            ->value('id');
+    public static function getEloquentQuery(): Builder
+    {
+        if (static::$activePeriodId === null) {
+            static::$activePeriodId = Period::query()
+                ->where('is_closed', false)
+                ->value('id');
+        }
+
+        return parent::getEloquentQuery()
+            ->with(['category', 'createdBy', 'itemType'])
+            ->withSum([
+                'purchaseItems as purchased_qty' => fn($q) =>
+                    $q->whereHas(
+                        'purchase',
+                        fn($p) =>
+                        $p->where('period_id', static::$activePeriodId)
+                    ),
+            ], 'qty')
+            ->withSum([
+                'usageItems as used_qty' => fn($q) =>
+                    $q->whereHas(
+                        'usage',
+                        fn($u) =>
+                        $u->where('period_id', static::$activePeriodId)
+                    ),
+            ], 'qty')
+            // 🔹 ADD PRIMARY FILTER HERE
+        ;
     }
-
-    return parent::getEloquentQuery()
-        ->with(['category', 'createdBy', 'itemType'])
-        ->withSum([
-            'purchaseItems as purchased_qty' => fn ($q) =>
-                $q->whereHas('purchase', fn ($p) =>
-                    $p->where('period_id', static::$activePeriodId)
-                ),
-        ], 'qty')
-        ->withSum([
-            'usageItems as used_qty' => fn ($q) =>
-                $q->whereHas('usage', fn ($u) =>
-                    $u->where('period_id', static::$activePeriodId)
-                ),
-        ], 'qty')
-        // 🔹 ADD PRIMARY FILTER HERE
-;
-}
 
     public static function boot(): void
     {
