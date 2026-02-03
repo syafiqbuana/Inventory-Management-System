@@ -90,6 +90,7 @@ Sistem informasi manajemen inventaris untuk perusahaan/instansi yang komprehensi
 - ✅ Arsip periode lama
 - ✅ Laporan per periode spesifik
 
+<<<<<<< HEAD
 ### 8. **Laporan & Export**
 - ✅ **Laporan Data Barang** - Detail stok per item dengan filter kategori
 - ✅ **Laporan Pembelian** - Data transaksi pembelian dengan detail item
@@ -100,6 +101,12 @@ Sistem informasi manajemen inventaris untuk perusahaan/instansi yang komprehensi
 - ✅ Filter laporan berdasarkan periode, kategori, dan rentang tanggal
 - ✅ Print directly dari sistem
 - ✅ Header dan footer profesional di setiap laporan
+=======
+### 6. **Laporan & Export**
+- ✅ Laporan Mutasi Stok (detail pembelian, penggunaan, stok)
+- ✅ Export ke PDF
+- ✅ Filter laporan berdasarkan periode & kategori
+>>>>>>> 6d3e499e9a4ed2d24249c628df2a1a4b3ec1b8a0
 
 ### 9. **Dashboard & Analytics**
 - ✅ Widget jumlah item
@@ -113,6 +120,7 @@ Sistem informasi manajemen inventaris untuk perusahaan/instansi yang komprehensi
 - ✅ Stats saldo keseluruhan
 - ✅ Widget latest users (admin only)
 
+<<<<<<< HEAD
 ### 10. **Master Data Management**
 - ✅ Manajemen Kategori Item
 - ✅ Manajemen Satuan Item (Item Type)
@@ -128,6 +136,13 @@ Sistem informasi manajemen inventaris untuk perusahaan/instansi yang komprehensi
 - ✅ Audit trail (created_by, created_at, updated_at)
 - ✅ Password hashing dengan bcrypt
 - ✅ Session management
+=======
+### 9. **Manajemen Master Data**
+- ✅ Kategori Item (Category)
+- ✅ Satuan Item (Item Type)
+- ✅ User & Role Management
+- ✅ Audit Trail (siapa membuat/mengubah data)
+>>>>>>> 6d3e499e9a4ed2d24249c628df2a1a4b3ec1b8a0
 
 ---
 
