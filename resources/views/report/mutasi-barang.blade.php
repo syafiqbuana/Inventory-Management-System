@@ -112,6 +112,30 @@
 
 <body>
 
+@php
+    /**
+     * Format angka dengan desimal otomatis
+     * - Jika bilangan bulat: tampilkan tanpa desimal (contoh: 37.000)
+     * - Jika ada desimal: tampilkan 2 digit desimal (contoh: 17.468,39)
+     */
+    function formatNumber($number, $forceDecimals = false) {
+        if ($number == 0) {
+            return '-';
+        }
+        
+        // Cek apakah angka memiliki desimal
+        $hasDecimals = (floor($number) != $number);
+        
+        if ($hasDecimals || $forceDecimals) {
+            // Tampilkan dengan 2 desimal
+            return number_format($number, 2, ',', '.');
+        } else {
+            // Tampilkan tanpa desimal
+            return number_format($number, 0, ',', '.');
+        }
+    }
+@endphp
+
 <div class="header">
     <h1>
         LAPORAN MUTASI BARANG PERSEDIAAN<br>
@@ -190,10 +214,10 @@
                         {{ $item['saldo_akhir']['vol'] > 0 ? number_format($item['saldo_akhir']['vol'], 0, ',', '.') : '-' }}
                     </td>
                     <td class="text-right number">
-                        {{ $item['saldo_akhir']['harga'] > 0 ? number_format($item['saldo_akhir']['harga'], 0, ',', '.') : '-' }}
+                        {{ formatNumber($item['saldo_akhir']['harga']) }}
                     </td>
                     <td class="text-right number">
-                        {{ $item['saldo_akhir']['total'] > 0 ? number_format($item['saldo_akhir']['total'], 0, ',', '.') : '-' }}
+                        {{ formatNumber($item['saldo_akhir']['total']) }}
                     </td>
 
                     {{-- PENGADAAN --}}
@@ -201,10 +225,10 @@
                         {{ $item['pengadaan']['vol'] > 0 ? number_format($item['pengadaan']['vol'], 0, ',', '.') : '-' }}
                     </td>
                     <td class="text-right number">
-                        {{ $item['pengadaan']['harga'] > 0 ? number_format($item['pengadaan']['harga'], 0, ',', '.') : '-' }}
+                        {{ formatNumber($item['pengadaan']['harga']) }}
                     </td>
                     <td class="text-right number">
-                        {{ $item['pengadaan']['total'] > 0 ? number_format($item['pengadaan']['total'], 0, ',', '.') : '-' }}
+                        {{ formatNumber($item['pengadaan']['total']) }}
                     </td>
 
                     {{-- JUMLAH SAMPAI --}}
@@ -212,10 +236,10 @@
                         {{ $item['jumlah_sampai']['vol'] > 0 ? number_format($item['jumlah_sampai']['vol'], 0, ',', '.') : '-' }}
                     </td>
                     <td class="text-right number">
-                        {{ $item['jumlah_sampai']['harga'] > 0 ? number_format($item['jumlah_sampai']['harga'], 0, ',', '.') : '-' }}
+                        {{ formatNumber($item['jumlah_sampai']['harga']) }}
                     </td>
                     <td class="text-right number">
-                        {{ $item['jumlah_sampai']['total'] > 0 ? number_format($item['jumlah_sampai']['total'], 0, ',', '.') : '-' }}
+                        {{ formatNumber($item['jumlah_sampai']['total']) }}
                     </td>
 
                     {{-- JUMLAH PENGGUNAAN --}}
@@ -223,10 +247,10 @@
                         {{ $item['jumlah_penggunaan']['vol'] > 0 ? number_format($item['jumlah_penggunaan']['vol'], 0, ',', '.') : '-' }}
                     </td>
                     <td class="text-right number">
-                        {{ $item['jumlah_penggunaan']['harga'] > 0 ? number_format($item['jumlah_penggunaan']['harga'], 0, ',', '.') : '-' }}
+                        {{ formatNumber($item['jumlah_penggunaan']['harga']) }}
                     </td>
                     <td class="text-right number">
-                        {{ $item['jumlah_penggunaan']['total'] > 0 ? number_format($item['jumlah_penggunaan']['total'], 0, ',', '.') : '-' }}
+                        {{ formatNumber($item['jumlah_penggunaan']['total']) }}
                     </td>
 
                     {{-- SISA PER --}}
@@ -234,13 +258,13 @@
                         {{ $item['sisa_per']['vol'] > 0 ? number_format($item['sisa_per']['vol'], 0, ',', '.') : '-' }}
                     </td>
                     <td class="text-right number">
-                        {{ $item['sisa_per']['harga'] > 0 ? number_format($item['sisa_per']['harga'], 0, ',', '.') : '-' }}
+                        {{ formatNumber($item['sisa_per']['harga']) }}
                     </td>
                     <td class="text-right number">
-                        {{ $item['sisa_per']['harga_pembelian_terakhir'] > 0 ? number_format($item['sisa_per']['harga_pembelian_terakhir'], 0, ',', '.') : '-' }}
+                        {{ formatNumber($item['sisa_per']['harga_pembelian_terakhir']) }}
                     </td>
                     <td class="text-right number">
-                        {{ $item['sisa_per']['total'] > 0 ? number_format($item['sisa_per']['total'], 0, ',', '.') : '-' }}
+                        {{ formatNumber($item['sisa_per']['total']) }}
                     </td>
                 </tr>
             @endforeach
@@ -255,7 +279,7 @@
                 </td>
                 <td></td>
                 <td class="text-right number">
-                    {{ number_format($category['totals']['saldo_akhir_total'], 0, ',', '.') }}
+                    {{ formatNumber($category['totals']['saldo_akhir_total']) }}
                 </td>
 
                 {{-- Total Pengadaan --}}
@@ -264,7 +288,7 @@
                 </td>
                 <td></td>
                 <td class="text-right number">
-                    {{ number_format($category['totals']['pengadaan_total'], 0, ',', '.') }}
+                    {{ formatNumber($category['totals']['pengadaan_total']) }}
                 </td>
 
                 {{-- Total Jumlah Sampai --}}
@@ -273,7 +297,7 @@
                 </td>
                 <td></td>
                 <td class="text-right number">
-                    {{ number_format($category['totals']['jumlah_sampai_total'], 0, ',', '.') }}
+                    {{ formatNumber($category['totals']['jumlah_sampai_total']) }}
                 </td>
 
                 {{-- Total Jumlah Penggunaan --}}
@@ -282,7 +306,7 @@
                 </td>
                 <td></td>
                 <td class="text-right number">
-                    {{ number_format($category['totals']['jumlah_penggunaan_total'], 0, ',', '.') }}
+                    {{ formatNumber($category['totals']['jumlah_penggunaan_total']) }}
                 </td>
 
                 {{-- Total Sisa Per --}}
@@ -292,7 +316,7 @@
                 <td></td>
                 <td></td>
                 <td class="text-right number">
-                    {{ number_format($category['totals']['sisa_per_total'], 0, ',', '.') }}
+                    {{ formatNumber($category['totals']['sisa_per_total']) }}
                 </td>
             </tr>
 

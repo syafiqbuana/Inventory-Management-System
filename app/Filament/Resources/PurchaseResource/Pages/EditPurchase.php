@@ -5,12 +5,9 @@ namespace App\Filament\Resources\PurchaseResource\Pages;
 use App\Filament\Resources\PurchaseResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
-use App\Models\Balance;
 use Filament\Actions\DeleteAction;
 use Filament\Notifications\Notification;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+
 
 class EditPurchase extends EditRecord
 {

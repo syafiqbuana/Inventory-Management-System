@@ -9,6 +9,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use App\Models\Item;
 use App\Models\ItemType;
+use App\Models\Period; // TAMBAHKAN INI
 use Filament\Tables;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Forms\Components\DatePicker;
@@ -47,7 +48,6 @@ class PurchaseResource extends Resource
                 Forms\Components\Tabs::make('PurchaseTabs')
                     ->columnSpanFull()
                     ->tabs([
-                        // --- TAB 1 (Tetap Sama) ---
                         Forms\Components\Tabs\Tab::make('Pengadaan Barang')
                             ->icon('heroicon-o-document-text')
                             ->schema([
@@ -100,7 +100,7 @@ class PurchaseResource extends Resource
                                                     ->numeric()
                                                     ->required()
                                                     ->default(0)
-                                                    ->live(debounce: 500)
+                                                    ->live(debounce: 1000)
                                                     ->afterStateUpdated(
                                                         fn(Get $get, Set $set)
                                                         => self::updateSubtotalAndTotal($get, $set)
@@ -111,8 +111,9 @@ class PurchaseResource extends Resource
                                                     ->numeric()
                                                     ->required()
                                                     ->readOnly()
+                                                    ->rule('decimal:0,2')
                                                     ->prefix('Rp')
-                                                    ->live(debounce: 500)
+                                                    ->live(debounce: 1000)
                                                     ->afterStateUpdated(
                                                         fn(Get $get, Set $set)
                                                         => self::updateSubtotalAndTotal($get, $set)
@@ -122,6 +123,7 @@ class PurchaseResource extends Resource
                                                     ->label('Subtotal')
                                                     ->readonly()
                                                     ->dehydrated()
+                                                    ->rule('decimal:0,2')
                                                     ->prefix('Rp'),
 
                                                 TextInput::make('supplier')
@@ -142,8 +144,6 @@ class PurchaseResource extends Resource
                                     ]),
                             ]),
 
-
-                        // --- TAB 2 (Solusi Baru dengan 2 Section) ---
                         Forms\Components\Tabs\Tab::make('Pengadaan Barang Baru')
                             ->icon('heroicon-o-archive-box')
                             ->schema([
@@ -157,7 +157,7 @@ class PurchaseResource extends Resource
                                                 Select::make('new_item_category')->label('Kategori')
                                                     ->searchable()->options(Category::pluck('name', 'id')),
                                                 Select::make('new_item_type')->label('Satuan')
-                                                ->searchable()->options(ItemType::pluck('name', 'id')),
+                                                    ->searchable()->options(ItemType::pluck('name', 'id')),
                                             ]),
                                     ])
                                     ->headerActions([
@@ -166,22 +166,51 @@ class PurchaseResource extends Resource
                                             ->color('success')
                                             ->icon('heroicon-m-check-circle')
                                             ->action(function (Get $get, Set $set) {
-                                                if (!$get('new_item_name'))
+                                                if (!$get('new_item_name')) {
+                                                    Notification::make()
+                                                        ->title('Gagal!')
+                                                        ->body('Nama barang wajib diisi.')
+                                                        ->danger()
+                                                        ->send();
                                                     return;
+                                                }
 
+                                                // PERBAIKAN: Dapatkan periode aktif
+                                                $activePeriod = Period::query()
+                                                    ->where('is_closed', false)
+                                                    ->orderByDesc('id')
+                                                    ->first();
+
+                                                if (!$activePeriod) {
+                                                    Notification::make()
+                                                        ->title('Gagal!')
+                                                        ->body('Tidak ada periode aktif. Silakan buat periode baru terlebih dahulu.')
+                                                        ->danger()
+                                                        ->send();
+                                                    return;
+                                                }
+
+                                                // Buat item baru dengan initial_period_id dari periode aktif
                                                 Item::create([
                                                     'name' => $get('new_item_name'),
                                                     'category_id' => $get('new_item_category'),
                                                     'item_type_id' => $get('new_item_type'),
+                                                    'initial_period_id' => $activePeriod->id, // PERBAIKAN: Set periode aktif
                                                     'price' => 0,
                                                     'stock' => 0,
+                                                    'initial_stock' => 0,
                                                 ]);
 
-                                                Notification::make()->title('Barang Berhasil Didaftarkan!')->success()->send();
+                                                Notification::make()
+                                                    ->title('Berhasil!')
+                                                    ->body('Barang baru berhasil didaftarkan pada periode ' . $activePeriod->year)
+                                                    ->success()
+                                                    ->send();
 
                                                 // Reset form input barang baru
                                                 $set('new_item_name', null);
-                                                $set('new_item_price', null);
+                                                $set('new_item_category', null);
+                                                $set('new_item_type', null);
                                             }),
                                     ]),
 
@@ -192,6 +221,7 @@ class PurchaseResource extends Resource
                                             ->readonly()
                                             ->label('Total Pengadaan')
                                             ->numeric()
+                                            ->prefix('Rp')
                                             ->afterStateUpdated(fn(Get $get, Set $set)
                                                 => self::updateSubtotalAndTotalTab2($get, $set))
                                             ->default(0)
@@ -203,46 +233,36 @@ class PurchaseResource extends Resource
 
                                         Repeater::make('extraPurchaseItems')
                                             ->label('Item Tambahan')
-                                            ->relationship('purchaseItems') // Menggunakan relasi yang sama agar tersimpan ke tabel yang sama
                                             ->live()
                                             ->schema([
                                                 Select::make('item_id')
                                                     ->label('Pilih Barang yang Baru Dibuat')
+                                                    ->reactive()
                                                     ->relationship('item', 'name')
+                                                    ->options(
+                                                        fn() =>
+                                                        Item::where('price', 0)->pluck('name', 'id')
+                                                    )
                                                     ->searchable()
                                                     ->getSearchResultsUsing(function (string $search) {
                                                         return Item::query()
-                                                            ->where('name', 'like', "%{$search}%")
-                                                            ->where(function ($query) {
-                                                                $query->where('price', 0)
-                                                                    ->orWhereNull('price');
-                                                            })
-                                                            // ✅ TIDAK perlu cek initial_stock
-                                                            ->orderBy('id', 'desc')
-                                                            ->limit(3)
-                                                            ->get()
-                                                            ->mapWithKeys(fn($item) => [
-                                                                $item->id => sprintf(
-                                                                    '%s | Satuan: %s',
-                                                                    $item->name,
-                                                                    $item->itemType?->name ?? '-'
-                                                                )
-                                                            ]);
+                                                            ->where('name', 'like', '%' . $search . '%')
+                                                            ->where('price', 0)
+                                                            ->limit(5)
+                                                            ->pluck('name', 'id');
                                                     })
-                                                    ->getOptionLabelUsing(fn($value): ?string => Item::find($value)?->name)
-                                                    ->live()
-                                                    ->afterStateUpdated(fn(Set $set) => $set('unit_price', 0))
-                                                    ->placeholder('Ketik nama barang baru...') // Gunakan live() sebagai pengganti reactive() di Filament V3
                                                 ,
                                                 TextInput::make('qty')
                                                     ->label('Jumlah')->numeric()->default(0)
-                                                    ->live(debounce: 500)
+                                                    ->live(debounce: 1000)
                                                     ->afterStateUpdated(fn(Get $get, Set $set) => self::updateSubtotalAndTotalTab2($get, $set)),
                                                 TextInput::make('unit_price')
                                                     ->label('Harga Satuan')->numeric()->prefix('Rp')
-                                                    ->live(debounce: 500)
+                                                    ->live(debounce: 1000)
+                                                    ->rule('decimal:0,2')
                                                     ->afterStateUpdated(fn(Get $get, Set $set) => self::updateSubtotalAndTotalTab2($get, $set)),
-                                                TextInput::make('subtotal')->label('Subtotal')->readonly()->dehydrated()->prefix('Rp'),
+                                                TextInput::make('subtotal')->label('Subtotal')->readonly()->dehydrated()->prefix('Rp')
+                                                    ->rule('decimal:0,2'),
                                                 TextInput::make('supplier')->columnSpanFull(),
                                             ])
                                             ->columns(3)
@@ -254,15 +274,13 @@ class PurchaseResource extends Resource
                                                 ->action('saveNewPurchaseItems'),
                                         ])->visible(fn($livewire) => $livewire instanceof Pages\CreatePurchase),
                                     ])
-
-
                             ])->visible(fn($livewire) => $livewire instanceof Pages\CreatePurchase),
                     ]),
             ]);
     }
 
 
-    // Fungsi Hitung Otomatis Subtotal + Update Total Besar
+    // Fungsi Hitung Otomatis Subtotal + Update Total
     protected static function updateSubtotalAndTotal(Get $get, Set $set): void
     {
         $qty = floatval($get('qty') ?? 0);
@@ -327,6 +345,7 @@ class PurchaseResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->emptyStateHeading('Tidak Ada Pengadaan')
             ->modifyQueryUsing(fn(Builder $query) => $query->with(['purchaseItems.item', 'createdBy']))
             ->defaultSort('created_at', 'desc')
             ->columns([
@@ -342,7 +361,7 @@ class PurchaseResource extends Resource
                     ->listWithLineBreaks()
                     ->bulleted()
                     ->wrap()
-                    ->limitList(3)
+                    ->limitList(2)
                     ->expandableLimitedList(),
 
                 Tables\Columns\TextColumn::make('purchaseItems.unit_price')
@@ -413,12 +432,12 @@ class PurchaseResource extends Resource
                     ->color('info')
                     ->icon('heroicon-o-printer')
                     ->action(function ($livewire) {
-                        // Ambil ID dari data yang sudah terfilter di tabel
+                    
                         $ids = $livewire->getFilteredTableQuery()->pluck('id')->toArray();
 
                         $url = route('purchase.report.stream', ['ids' => implode(',', $ids)]);
 
-                        // Membuka URL di tab baru menggunakan JavaScript redirect
+                        
                         $livewire->js("window.open('{$url}', '_blank')");
                     }),
             ]);

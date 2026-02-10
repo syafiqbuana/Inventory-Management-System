@@ -33,33 +33,50 @@ class CreateUsage extends CreateRecord
 
 
 
-    protected function beforeCreate(): void
-    {
-        DB::transaction(function () {
-            foreach ($this->data['usageItems'] as $usageItemData) {
-                $item = Item::query()
-                    ->withSum('purchaseItems', 'qty')
-                    ->withSum('usageItems', 'qty')
-                    ->lockForUpdate() 
-                    ->find($usageItemData['item_id']);
+protected function beforeCreate(): void
+{
+    DB::transaction(function () {
+        $activePeriod = \App\Models\Period::active();
 
-                $availableStock =
-                    $item->initial_stock
-                    + ($item->purchase_items_sum_qty ?? 0)
-                    - ($item->usage_items_sum_qty ?? 0);
+        foreach ($this->data['usageItems'] as $usageItemData) {
+            $item = Item::query()
+                ->lockForUpdate()
+                ->withSum([
+                    'purchaseItems as purchased_qty' => fn ($q) =>
+                        $q->whereHas(
+                            'purchase',
+                            fn ($p) => $p->where('period_id', $activePeriod->id)
+                        )
+                ], 'qty')
+                ->withSum([
+                    'usageItems as used_qty' => fn ($q) =>
+                        $q->whereHas(
+                            'usage',
+                            fn ($u) => $u->where('period_id', $activePeriod->id)
+                        )
+                ], 'qty')
+                ->findOrFail($usageItemData['item_id']);
 
-                if ($usageItemData['qty'] > $availableStock) {
-                    Notification::make()
-                        ->title('Stok Tidak Cukup')
-                        ->body("Stok {$item->name} hanya tersedia {$availableStock}")
-                        ->danger()
-                        ->send();
+            $availableStock =
+                ($item->initial_period_id === $activePeriod->id
+                    ? $item->initial_stock
+                    : 0)
+                + ($item->purchased_qty ?? 0)
+                - ($item->used_qty ?? 0);
 
-                    $this->halt();
-                }
+            if ($usageItemData['qty'] > $availableStock) {
+                Notification::make()
+                    ->title('Stok Tidak Cukup')
+                    ->body("Stok {$item->name} hanya tersedia {$availableStock}")
+                    ->danger()
+                    ->send();
+
+                $this->halt();
             }
-        });
-    }
+        }
+    });
+}
+
 
     protected function getCreatedNotificationTitle(): ?string
     {

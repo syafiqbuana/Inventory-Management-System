@@ -37,15 +37,21 @@ class Period extends Model
         return !$this->is_closed;
     }
 
-  public static function active(): self
-{
-    if (static::$resolvedActivePeriod !== null) {
-        return static::$resolvedActivePeriod;
-    }
+    public static function active(): ?self
+    {
+        if (self::$resolvedActivePeriod) {
+            return self::$resolvedActivePeriod;
+        }
 
-    return static::$resolvedActivePeriod = cache()->rememberForever(
-        'active_period',
-        fn () => self::where('is_closed', false)->firstOrFail()
-    );
-}
+        return self::$resolvedActivePeriod = cache()->remember(
+            'active_period',
+            now()->addMinutes(10),
+            fn() => self::where('is_closed', false)->latest('id')->first()
+        );
+    }
+    public static function forgetActive(): void
+    {
+        self::$resolvedActivePeriod = null;
+        cache()->forget('active_period');
+    }
 }

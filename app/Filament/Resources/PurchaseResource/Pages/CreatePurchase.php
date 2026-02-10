@@ -22,11 +22,6 @@ class CreatePurchase extends CreateRecord
     {
         return [];
     }
-
-    /**
-     * Simpan pengadaan barang dari Tab 1 (Pengadaan Barang)
-     * Untuk barang yang sudah memiliki price != 0
-     */
     public function savePurchaseItems()
     {
         $data = $this->form->getRawState();
@@ -65,9 +60,6 @@ class CreatePurchase extends CreateRecord
             // Simpan item-item dari tab pertama
             foreach ($validItems as $item) {
                 $purchase->purchaseItems()->create($item);
-                
-                // TIDAK PERLU update stock karena stock adalah calculated field
-                // Stock akan otomatis terhitung dari purchased_qty melalui relasi
             }
 
             DB::commit();
@@ -90,16 +82,6 @@ class CreatePurchase extends CreateRecord
                 ->send();
         }
     }
-
-    /**
-     * Simpan pengadaan barang dari Tab 2 (Pengadaan Barang Baru)
-     * Untuk barang baru yang price = 0 (baru dibuat)
-     * 
-     * PENTING: 
-     * - HANYA update `price` agar barang bisa muncul di Tab 1
-     * - TIDAK update `initial_stock` karena ini bukan barang dari periode sebelumnya
-     * - Stock akan otomatis terhitung dari purchased_qty
-     */
     public function saveNewPurchaseItems()
     {
         $raw = $this->form->getRawState();
@@ -150,7 +132,7 @@ class CreatePurchase extends CreateRecord
             Notification::make()
                 ->success()
                 ->title('Pengadaan barang baru berhasil dicatat')
-                ->body('Item berhasil diupdate dan sekarang dapat digunakan untuk pengadaan ulang di Tab 1')
+                ->body('Dapat dibeli ulang melalui Tab Pengadaan Barang')
                 ->send();
 
             // Reset form atau redirect
@@ -167,10 +149,6 @@ class CreatePurchase extends CreateRecord
         }
     }
 
-    /**
-     * Helper method untuk mengecek apakah tab kedua memiliki data
-     * (Tidak digunakan lagi untuk blocking, hanya untuk informasi jika diperlukan)
-     */
     protected function isNewItemPurchaseTabActive(array $data): bool
     {
         return collect($data['extraPurchaseItems'] ?? [])

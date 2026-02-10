@@ -149,6 +149,8 @@ class UsageResource extends Resource
                         return $record->usageItems->map(fn($item) => $item->item->name ?? 'Item Tidak Dikenal')->toArray()
                         ;
                     })
+                    ->limitList(3)
+                    ->expandableLimitedList()
                     ->listWithLineBreaks()
                     ->bulleted(),
 
@@ -235,20 +237,17 @@ class UsageResource extends Resource
                         $livewire = $table->getLivewire();
                         $appliedFilters = $livewire->tableFilters ?? [];
 
-                        // Build query parameters
                         $params = [];
-
-                        // 1. Filter Kategori
                         if (isset($appliedFilters['category']['values']) && !empty($appliedFilters['category']['values'])) {
                             $params['categories'] = $appliedFilters['category']['values'];
                         }
 
-                        // 2. Filter Pengguna
+                        
                         if (isset($appliedFilters['used_by']['value']) && $appliedFilters['used_by']['value'] !== null) {
                             $params['used_by'] = $appliedFilters['used_by']['value'];
                         }
 
-                        // 3. Filter Rentang Tanggal
+                    
                         if (isset($appliedFilters['usage_date']['usage_date'])) {
                             $dateRangeString = $appliedFilters['usage_date']['usage_date'];
                             if ($dateRangeString) {
@@ -279,9 +278,6 @@ class UsageResource extends Resource
         ];
     }
 
-    /**
-     * Query untuk eager loading relasi
-     */
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()

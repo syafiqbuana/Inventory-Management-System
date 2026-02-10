@@ -1,47 +1,37 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <title>Laporan Data Barang</title>
     <meta charset="UTF-8">
     <style>
-        @page {
-            margin: 2cm 1.5cm;
-            size: A4;
-        }
-        
+        @page { size: A4 landscape; margin: 15mm 10mm; }
         body { 
-            font-family: sans-serif; 
-            margin: 0;
-            padding: 0;
+            font-family: 'Helvetica', 'Arial', sans-serif; 
+            font-size: 9px; 
+            line-height: 1.4; 
+            color: #333; 
         }
         
         .header { 
             text-align: center; 
             margin-bottom: 20px; 
-            border-bottom: 2px solid #333;
-            padding-bottom: 10px;
+            border-bottom: 2px solid #000; 
+            padding-bottom: 10px; 
         }
         .header h1 { 
+            font-size: 14px; 
+            text-transform: uppercase; 
             margin: 0; 
-            font-size: 20px;
-            text-transform: uppercase;
-        }
-        .header p {
-            margin: 5px 0;
-            font-size: 12px;
-            color: #666;
         }
         
         .filter-info { 
             margin-bottom: 15px; 
-            padding: 10px; 
+            padding: 8px; 
             border: 1px solid #ccc; 
             background-color: #f9f9f9;
-            page-break-inside: avoid;
+            font-size: 9px;
         }
         .filter-info p { 
             margin: 5px 0; 
-            font-size: 12px; 
         }
         .filter-info strong {
             color: #333;
@@ -53,46 +43,38 @@
         .filter-info li { 
             list-style-type: disc; 
             margin-bottom: 3px; 
-            font-size: 12px;
         }
         
         table { 
             width: 100%; 
             border-collapse: collapse; 
-            margin-top: 10px;
-            page-break-inside: auto;
-        }
-        
-        thead {
-            display: table-header-group; /* Repeat header di setiap halaman */
-        }
-        
-        tfoot {
-            display: table-footer-group; /* Footer tetap di akhir */
-        }
-        
-        tr {
-            page-break-inside: avoid;
-            page-break-after: auto;
+            margin-top: 10px; 
         }
         
         th, td { 
-            border: 1px solid #333; 
-            padding: 8px; 
-            text-align: left; 
-            font-size: 11px; 
+            border: 1px solid #000; 
+            padding: 5px; 
         }
         th { 
-            background-color: #e0e0e0; 
-            text-align: center;
-            font-weight: bold;
-            color: #333;
-        }
-        .right { 
-            text-align: right; 
-        }
-        .center { 
+            background-color: #f2f2f2; 
+            font-weight: bold; 
             text-align: center; 
+            text-transform: uppercase; 
+            font-size: 8px; 
+        }
+        
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .text-left { text-align: left; }
+        
+        .total-row { 
+            background-color: #f8fafc; 
+            font-weight: bold; 
+        }
+        .grand-total { 
+            background-color: #cbd5e1; 
+            font-weight: bold; 
+            font-size: 10px; 
         }
         
         .summary {
@@ -100,122 +82,123 @@
             padding: 10px;
             background-color: #f0f0f0;
             border: 1px solid #ccc;
-            page-break-inside: avoid;
+            font-size: 9px;
         }
         .summary p {
             margin: 5px 0;
-            font-size: 12px;
         }
         .summary strong {
-            font-size: 13px;
+            font-size: 10px;
         }
         
         .footer {
-            margin-top: 20px;
+            margin-top: 15px;
             text-align: right;
-            font-size: 10px;
+            font-size: 8px;
             color: #666;
-            page-break-inside: avoid;
-        }
-        
-        /* Untuk print */
-        @media print {
-            body {
-                margin: 0;
-            }
-            .header, .filter-info {
-                page-break-after: avoid;
-            }
-            .summary, .footer {
-                page-break-before: avoid;
-            }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>LAPORAN DATA BARANG</h1>
-        <p>Tanggal Cetak: {{ now()->translatedFormat('d F Y H:i:s') }}</p>
+
+<div class="header">
+    <h1>Laporan Data Barang</h1>
+    <p style="margin: 5px 0 0 0;">Tanggal Cetak: {{ $generatedAt }}</p>
+</div>
+
+@if (!empty($keteranganFilter))
+    <div class="filter-info">
+        <strong>Filter yang Diterapkan:</strong>
+        <ul>
+            @foreach ($keteranganFilter as $keterangan)
+                <li>{!! str_replace(['**', '*'], ['<b>', '</b>'], $keterangan) !!}</li>
+            @endforeach
+        </ul>
     </div>
-    
-    @if (!empty($keteranganFilter))
-        <div class="filter-info">
-            <strong>Filter yang Diterapkan:</strong>
-            <ul>
-                @foreach ($keteranganFilter as $keterangan)
-                    <li>{!! str_replace(['**', '*'], ['<b>', '</b>'], $keterangan) !!}</li>
-                @endforeach
-            </ul>
-        </div>
-    @else
-        <div class="filter-info">
-            <p><strong>Tidak ada filter yang diterapkan.</strong> Menampilkan semua data barang.</p>
-        </div>
-    @endif
-    
-    <table>
-        <thead>
-            <tr>
-                <th style="width: 5%;">No.</th>
-                <th style="width: 30%;">Nama Barang</th>
-                <th style="width: 20%;">Kategori</th>
-                <th style="width: 12%;">Stok Awal</th>
-                <th style="width: 12%;">Total Stok</th>
-                <th style="width: 21%;">Dibuat Pada</th>
-            </tr>
-        </thead>
-        <tbody>
-            @php 
-                $no = 1;
-                $totalInitialStock = 0;
-                $totalStock = 0;
-            @endphp
-            
-            @forelse ($records as $item)
-                <tr>
-                    <td class="center">{{ $no++ }}</td>
-                    <td>{{ $item->name }}</td>
-                    <td class="center">{{ $item->category->name ?? '-' }}</td>
-                    <td class="center">{{ number_format($item->initial_stock, 0, ',', '.') }}</td>
-                    <td class="center">{{ number_format($item->total_stock, 0, ',', '.') }}</td>
-                    <td class="center">{{ \Carbon\Carbon::parse($item->created_at)->translatedFormat('d F Y') }}</td>
-                </tr>
-                @php
-                    $totalInitialStock += $item->initial_stock;
-                    $totalStock += $item->total_stock;
-                @endphp
-            @empty
-                <tr>
-                    <td colspan="6" class="center" style="padding: 20px; color: #999;">
-                        Tidak ada data barang yang tersedia
-                    </td>
-                </tr>
-            @endforelse
-        </tbody>
+@else
+    <div class="filter-info">
+        <p><strong>Tidak ada filter yang diterapkan.</strong> Menampilkan semua data barang.</p>
+    </div>
+@endif
+
+<table>
+    <thead>
+        <tr>
+            <th style="width: 4%;">No.</th>
+            <th style="width: 25%;">Nama Barang</th>
+            <th style="width: 15%;">Kategori</th>
+            <th style="width: 10%;">Satuan</th>
+            <th style="width: 10%;">Stok Awal</th>
+            <th style="width: 10%;">Pembelian</th>
+            <th style="width: 10%;">Penggunaan</th>
+            <th style="width: 10%;">Total Stok</th>
+            <th style="width: 12%;">Dibuat Pada</th>
+        </tr>
+    </thead>
+    <tbody>
+        @php 
+            $no = 1;
+            $totalInitialStock = 0;
+            $totalPurchased = 0;
+            $totalUsed = 0;
+            $totalStock = 0;
+        @endphp
         
-        @if ($records->count() > 0)
-            <tfoot>
-                <tr style="background-color: #f5f5f5;">
-                    <th colspan="3" class="right">Total:</th>
-                    <th class="center">{{ number_format($totalInitialStock, 0, ',', '.') }}</th>
-                    <th class="center">{{ number_format($totalStock, 0, ',', '.') }}</th>
-                    <th></th>
-                </tr>
-            </tfoot>
-        @endif
-    </table>
+        @forelse ($records as $item)
+            <tr>
+                <td class="text-center">{{ $no++ }}</td>
+                <td class="text-left">{{ $item->name }}</td>
+                <td class="text-center">{{ $item->category->name ?? '-' }}</td>
+                <td class="text-center">{{ $item->itemType->name ?? '-' }}</td>
+                <td class="text-center">{{ number_format($item->initial_stock, 0, ',', '.') }}</td>
+                <td class="text-center">{{ number_format($item->purchased_qty ?? 0, 0, ',', '.') }}</td>
+                <td class="text-center">{{ number_format($item->used_qty ?? 0, 0, ',', '.') }}</td>
+                <td class="text-center">{{ number_format($item->total_stock, 0, ',', '.') }}</td>
+                <td class="text-center">{{ \Carbon\Carbon::parse($item->created_at)->translatedFormat('d/m/Y') }}</td>
+            </tr>
+            @php
+                $totalInitialStock += $item->initial_stock;
+                $totalPurchased += $item->purchased_qty ?? 0;
+                $totalUsed += $item->used_qty ?? 0;
+                $totalStock += $item->total_stock;
+            @endphp
+        @empty
+            <tr>
+                <td colspan="9" class="text-center" style="padding: 20px; color: #999;">
+                    Tidak ada data barang yang tersedia
+                </td>
+            </tr>
+        @endforelse
+    </tbody>
     
     @if ($records->count() > 0)
-        <div class="summary">
-            <p><strong>Ringkasan:</strong></p>
-            <p>Total Barang: {{ number_format($records->count(), 0, ',', '.') }} item</p>
-            <p>Total Stok Awal: {{ number_format($totalInitialStock, 0, ',', '.') }} unit</p>
-            <p>Total Stok Saat Ini: {{ number_format($totalStock, 0, ',', '.') }} unit</p>
-        </div>
+        <tfoot>
+            <tr class="grand-total">
+                <td colspan="4" class="text-right">TOTAL KESELURUHAN:</td>
+                <td class="text-center">{{ number_format($totalInitialStock, 0, ',', '.') }}</td>
+                <td class="text-center">{{ number_format($totalPurchased, 0, ',', '.') }}</td>
+                <td class="text-center">{{ number_format($totalUsed, 0, ',', '.') }}</td>
+                <td class="text-center">{{ number_format($totalStock, 0, ',', '.') }}</td>
+                <td></td>
+            </tr>
+        </tfoot>
     @endif
-    
-    <div class="footer">
-        <p>Dokumen ini dihasilkan secara otomatis oleh sistem</p>
+</table>
+
+@if ($records->count() > 0)
+    <div class="summary">
+        <p><strong>Ringkasan:</strong></p>
+        <p>Total Barang: {{ number_format($records->count(), 0, ',', '.') }} item</p>
+        <p>Total Stok Awal: {{ number_format($totalInitialStock, 0, ',', '.') }} unit</p>
+        <p>Total Pembelian: {{ number_format($totalPurchased, 0, ',', '.') }} unit</p>
+        <p>Total Penggunaan: {{ number_format($totalUsed, 0, ',', '.') }} unit</p>
+        <p>Total Stok Saat Ini: {{ number_format($totalStock, 0, ',', '.') }} unit</p>
     </div>
+@endif
+
+<div class="footer">
+    <p>Dokumen ini dihasilkan secara otomatis oleh sistem</p>
+</div>
+
 </body>
 </html>

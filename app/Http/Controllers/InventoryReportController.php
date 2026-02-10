@@ -20,7 +20,6 @@ class InventoryReportController extends Controller
         
         $tanggalAkhirCarbon = Carbon::parse($tanggalAkhir);
 
-        // Ambil data periode yang dipilih
         $periode = Period::find($periodeId);
         
         if (!$periode) {
@@ -55,29 +54,18 @@ class InventoryReportController extends Controller
             foreach ($category->items as $item) {
 
                 /* ================= 1. SALDO AKHIR ================= */
-                /**
-                 * SOLUSI UNTUK DATA HISTORIS:
-                 * 
-                 * Jika periode sudah ditutup (is_closed = true):
-                 *   → Ambil dari tabel period_stocks (data historis)
-                 * 
-                 * Jika periode masih aktif (is_closed = false):
-                 *   → Hitung dari item.initial_stock (real-time)
-                 */
                 if ($periode->is_closed) {
-                    // ✅ Periode sudah ditutup → ambil dari snapshot
                     $periodStock = PeriodStock::where('period_id', $periode->id)
                         ->where('item_id', $item->id)
                         ->first();
                     
                     $saldoAkhirVol = $periodStock->initial_stock ?? 0;
-                    $saldoAkhirHarga = $periodStock->price ?? 0;
+                    $saldoAkhirHarga = (float) ($periodStock->price ?? 0); // Cast ke float
                 } else {
-                    // ✅ Periode masih aktif → hitung real-time
                     $saldoAkhirVol = ($item->initial_period_id == $periode->id) 
                         ? $item->initial_stock 
                         : 0;
-                    $saldoAkhirHarga = $item->price;
+                    $saldoAkhirHarga = (float) $item->price; // Cast ke float
                 }
                 
                 // Conditional rendering
@@ -92,7 +80,7 @@ class InventoryReportController extends Controller
                 $pengadaanData = PurchaseItem::where('item_id', $item->id)
                     ->whereHas('purchase', fn ($q) =>
                         $q->where('period_id', $periode->id)
-                          ->whereDate('purchase_date', '<=', $tanggalAkhir)
+                        ->whereDate('purchase_date', '<=', $tanggalAkhir)
                     )
                     ->selectRaw('
                         SUM(qty) as total_qty,
@@ -103,8 +91,8 @@ class InventoryReportController extends Controller
                 $pengadaanVol = $pengadaanData->total_qty ?? 0;
                 
                 if ($pengadaanVol > 0) {
-                    $pengadaanTotal = $pengadaanData->total_amount ?? 0;
-                    $pengadaanHarga = round($pengadaanTotal / $pengadaanVol);
+                    $pengadaanTotal = (float) ($pengadaanData->total_amount ?? 0); // Cast ke float
+                    $pengadaanHarga = $pengadaanTotal / $pengadaanVol; // Jangan round, biarkan desimal
                 } else {
                     $pengadaanHarga = 0;
                     $pengadaanTotal = 0;
@@ -115,7 +103,7 @@ class InventoryReportController extends Controller
                 
                 if ($jumlahSampaiVol > 0) {
                     $jumlahSampaiTotal = $saldoAkhirTotal + $pengadaanTotal;
-                    $jumlahSampaiHarga = round($jumlahSampaiTotal / $jumlahSampaiVol);
+                    $jumlahSampaiHarga = $jumlahSampaiTotal / $jumlahSampaiVol; // Jangan round
                 } else {
                     $jumlahSampaiHarga = 0;
                     $jumlahSampaiTotal = 0;
@@ -148,15 +136,19 @@ class InventoryReportController extends Controller
                         $q->where('period_id', $periode->id)
                           ->whereDate('purchase_date', '<=', $tanggalAkhir)
                     )
-                    ->orderByDesc('id')
-                    ->value('unit_price');
+                    ->join('purchases', 'purchase_items.purchase_id', '=', 'purchases.id')
+                    ->orderByDesc('purchases.purchase_date')
+                    ->orderByDesc('purchase_items.id')
+                    ->value('purchase_items.unit_price');
+                
+                $lastPurchasePrice = (float) ($lastPurchasePrice ?? 0); // Cast ke float
 
                 /* ================= 6. SISA ================= */
                 $sisaPerVol = $jumlahSampaiVol - $penggunaanVol;
                 
                 if ($sisaPerVol > 0) {
-                    $sisaPerHarga = $lastPurchasePrice ?? $saldoAkhirHarga;
-                    $hargaPembelianTerakhir = $lastPurchasePrice ?? $saldoAkhirHarga;
+                    $sisaPerHarga = $lastPurchasePrice ?: $saldoAkhirHarga;
+                    $hargaPembelianTerakhir = $lastPurchasePrice ?: $saldoAkhirHarga;
                     $sisaPerTotal = $sisaPerVol * $sisaPerHarga;
                 } else {
                     $sisaPerHarga = 0;
@@ -201,6 +193,11 @@ class InventoryReportController extends Controller
                     ],
                 ];
 
+                // Skip barang yang semua volume-nya 0 (habis terpakai/tidak ada stok)
+                if ($this->isItemEmpty($itemData)) {
+                    continue;
+                }
+
                 /* ================= TOTAL PER KATEGORI ================= */
                 foreach ([
                     'saldo_akhir',
@@ -243,5 +240,20 @@ class InventoryReportController extends Controller
         return Pdf::loadView('report.mutasi-barang', $data)
             ->setPaper('a4', 'landscape')
             ->stream('Laporan-Mutasi-Barang-Periode-' . $periode->year . '-' . $tanggalAkhir . '.pdf');
+    }
+
+    /**
+     * 
+     * 
+     * @param array $itemData
+     * @return bool
+     */
+    private function isItemEmpty(array $itemData): bool
+    {
+        return $itemData['saldo_akhir']['vol'] == 0 
+            && $itemData['pengadaan']['vol'] == 0 
+            && $itemData['jumlah_sampai']['vol'] == 0 
+            && $itemData['jumlah_penggunaan']['vol'] == 0 
+            && $itemData['sisa_per']['vol'] == 0;
     }
 }

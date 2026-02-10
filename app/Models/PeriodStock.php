@@ -17,7 +17,7 @@ class PeriodStock extends Model
     protected $casts = [
         'initial_stock' => 'integer',
         'final_stock' => 'integer',
-        'price' => 'integer',
+        'price' => 'decimal:2',
     ];
 
     public function period(){

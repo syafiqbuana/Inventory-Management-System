@@ -22,10 +22,8 @@ class Usage extends Model
 
             static::creating(function (Usage $purchase) {
 
-            // Auto assign creator
             $purchase->created_by ??= Auth::id();
 
-            // Auto assign active period
             if (! $purchase->period_id) {
                 $activePeriodId = Period::query()
                     ->where('is_closed', false)
@@ -40,7 +38,6 @@ class Usage extends Model
                 $purchase->period_id = $activePeriodId;
             }
 
-            // Block create if period is closed
             $isClosed = Period::query()
                 ->where('id', $purchase->period_id)
                 ->where('is_closed', true)
@@ -53,7 +50,6 @@ class Usage extends Model
             }
         });
 
-        // 🚫 On update
         static::updating(function (Usage $purchase) {
 
             $isClosed = Period::query()
@@ -68,7 +64,6 @@ class Usage extends Model
             }
         });
 
-        // 🚫 On delete
         static::deleting(function (Usage $purchase) {
 
             $isClosed = Period::query()

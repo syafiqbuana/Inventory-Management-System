@@ -50,7 +50,6 @@ class ExportPurchasePdfController extends Controller
 
         $pdf->setPaper('a4', 'landscape');
 
-        // Menggunakan stream() agar terbuka di browser
         return $pdf->stream('Laporan_Pembelian.pdf');
     }
 }

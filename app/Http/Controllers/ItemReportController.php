@@ -12,14 +12,11 @@ class ItemReportController extends Controller
 {
     public function export(Request $request)
     {
-        // Ambil parameter filter dari request
         $categoryId = $request->input('category');
         $dateRange = $request->input('date_range');
 
-        // Dapatkan active period
         $activePeriod = Period::active();
 
-        // Query dasar dengan semua relasi dan agregat yang dibutuhkan
         $query = Item::query()
             ->with([
                 'category',
@@ -27,7 +24,7 @@ class ItemReportController extends Controller
                 'initialPeriod',
                 'createdBy'
             ])
-            // Tambahkan agregat untuk purchased_qty
+            // agregat untuk purchased_qty
             ->withSum([
                 'purchaseItems as purchased_qty' => function ($query) use ($activePeriod) {
                     if ($activePeriod) {
@@ -37,7 +34,7 @@ class ItemReportController extends Controller
                     }
                 }
             ], 'qty')
-            // Tambahkan agregat untuk used_qty
+            //agregat untuk used_qty
             ->withSum([
                 'usageItems as used_qty' => function ($query) use ($activePeriod) {
                     if ($activePeriod) {
@@ -48,7 +45,6 @@ class ItemReportController extends Controller
                 }
             ], 'qty');
 
-        // Array untuk menyimpan keterangan filter
         $keteranganFilter = [];
 
         // 1. Filter Kategori
@@ -78,17 +74,13 @@ class ItemReportController extends Controller
             }
         }
 
-        // Ambil data dengan urutan yang sama seperti di tabel
         $records = $query->orderBy('created_at', 'desc')->get();
-
-        // Generate PDF
+        $generatedAt = now()->translatedFormat('d F Y H:i:s');
         $pdf = App::make('dompdf.wrapper');
-        $pdf->loadView('pdf.item_report', compact('records', 'keteranganFilter'));
-        $pdf->setPaper('a4', 'portrait');
-
+        $pdf->loadView('pdf.item_report', compact('records', 'keteranganFilter', 'generatedAt'));
+        $pdf->setPaper('a4', 'landscape'); 
         $fileName = 'Laporan_Data_Barang_' . now()->format('Ymd_His') . '.pdf';
 
-        // Stream PDF ke browser untuk preview
         return $pdf->stream($fileName);
     }
 }

@@ -121,7 +121,7 @@ class UserResource extends Resource
             return $query->whereIn('role', ['admin', 'staff']);
         }
 
-        return $query->whereRaw('1 = 0'); // staff see nothing
+        return $query->whereRaw('1 = 0'); 
     }
 
 

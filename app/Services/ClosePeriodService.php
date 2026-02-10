@@ -24,14 +24,18 @@ class ClosePeriodService
             $items = Item::query()
                 ->withSum([
                     'purchaseItems as purchased_qty' => function ($q) use ($period) {
-                        $q->whereHas('purchase', fn ($p) =>
+                        $q->whereHas(
+                            'purchase',
+                            fn($p) =>
                             $p->where('period_id', $period->id)
                         );
                     }
                 ], 'qty')
                 ->withSum([
                     'usageItems as used_qty' => function ($q) use ($period) {
-                        $q->whereHas('usage', fn ($u) =>
+                        $q->whereHas(
+                            'usage',
+                            fn($u) =>
                             $u->where('period_id', $period->id)
                         );
                     }
@@ -43,8 +47,8 @@ class ClosePeriodService
              * Ini akan menyimpan data historis periode yang akan ditutup
              */
             foreach ($items as $item) {
-                $initialStock = ($item->initial_period_id == $period->id) 
-                    ? $item->initial_stock 
+                $initialStock = ($item->initial_period_id == $period->id)
+                    ? $item->initial_stock
                     : 0;
 
                 $finalStock = $initialStock
@@ -119,6 +123,9 @@ class ClosePeriodService
                     ]);
                 }
             }
+
+            cache()->forget('active_period');
+            Period::forgetActive();
 
             return $nextPeriod;
         });

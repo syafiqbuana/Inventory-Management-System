@@ -3,16 +3,20 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ItemResource\Pages;
-use App\Filament\Resources\ItemResource\RelationManagers;
 use App\Models\Item;
+use EightyNine\ExcelImport\ExcelImportAction;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Tables\Actions\Action;
+use Filament\Forms\Components\FileUpload;
+use Filament\Notifications\Notification;
+use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\ItemImport;
 use Filament\Resources\Resource;
 use App\Models\ItemType;
 use App\Models\Period;
 use Filament\Tables;
-use Illuminate\Support\Facades\App;
-use Filament\Tables\Actions\Action;
 use App\Models\Category;
 use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Components\Repeater;
@@ -20,8 +24,6 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Malzariey\FilamentDaterangepickerFilter\Filters\DateRangeFilter;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Tables\Filters\Filter;
 
 
 class ItemResource extends Resource
@@ -43,10 +45,7 @@ class ItemResource extends Resource
                     ->schema([
                         Forms\Components\Placeholder::make('created_by_name')
                             ->label('Dibuat oleh :')
-                            ->content(fn($record) => $record?->createdBy?->name ?? Auth::user()->name)
-
-                        ,
-                        // Form untuk CREATE (menambah multiple items sekaligus)
+                            ->content(fn($record) => $record?->createdBy?->name ?? Auth::user()->name),
                         Repeater::make('new_items')
                             ->label('Tambah Item')
                             ->reactive()
@@ -83,7 +82,6 @@ class ItemResource extends Resource
                             ->columnSpanFull()
                             ->visible(fn($livewire) => $livewire instanceof Pages\CreateItem),
 
-                        // Form untuk EDIT (edit single item)
                         Forms\Components\Select::make('category_id')
                             ->label('Kategori')
                             ->options(Category::pluck('name', 'id'))
@@ -132,10 +130,9 @@ class ItemResource extends Resource
         return $table
             ->emptyStateHeading('Tidak Ada Barang')
             ->columns([
-                Tables\Columns\TextColumn::make('name')->label('Nama Barang')->searchable()->alignCenter(),
-                Tables\Columns\TextColumn::make('category.name')->label('Kategori')->searchable()->alignCenter(),
+                Tables\Columns\TextColumn::make('name')->label('Nama Barang')->alignCenter(),
+                Tables\Columns\TextColumn::make('category.name')->label('Kategori')->alignCenter(),
                 Tables\Columns\TextColumn::make('initial_stock')->label('Stok Awal')->alignCenter()
-                    //jika initial stock nya 0 maka tampilkan -
                     ->formatStateUsing(fn($state) => $state == 0 ? '-' : $state),
                 Tables\Columns\TextColumn::make('stock')
                     ->label('Total Stock')
@@ -162,7 +159,6 @@ class ItemResource extends Resource
                         'Rp ' . number_format((int) $state, 0, ',', '.')
                     )
                 ,
-                //show item type
                 Tables\Columns\TextColumn::make('itemType.name')->label('Satuan')->alignCenter(),
                 Tables\Columns\TextColumn::make('initialPeriod.year')->label('Periode')->alignCenter(),
                 Tables\Columns\TextColumn::make('createdBy.name')->label('Dibuat Oleh')->alignCenter()
@@ -171,11 +167,9 @@ class ItemResource extends Resource
 
             ])
             ->filters([
-                Filter::make('empty_items')
-                    ->label('Barang Baru')
-                    ->query(fn(Builder $query) =>
-                        $query->where('price', 0)
-                            ->where('initial_stock', 0))
+                SelectFilter::make('category')
+                    ->relationship('category', 'name')
+                    ->label('Kategori'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -191,6 +185,73 @@ class ItemResource extends Resource
 
 
             ->headerActions([
+                Action::make('download_template')
+                    ->label('Download Template')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('success')
+                    ->url(route('item.template.download')),
+                Action::make('import_excel')
+                    ->label('Import Excel')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->color('primary')
+                    ->form([
+                        FileUpload::make('file')
+                            ->label('File Excel')
+                            ->acceptedFileTypes([
+                                'application/vnd.ms-excel',
+                                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                            ])
+                            ->required()
+                            ->maxSize(5120)
+                            ->storeFiles(false)
+                            ->helperText('Format: .xls atau .xlsx, Maksimal 5MB')
+                    ])
+                    ->action(function (array $data) {
+                        try {
+                            $file = $data['file'];
+                            $import = new ItemImport();
+                            Excel::import($import, $file);
+
+                            $summary = $import->getSummary();
+                            $failures = $import->getFailures();
+
+                            if (count($failures) > 0) {
+                                $errorMessages = [];
+                                foreach ($failures as $failure) {
+                                    $errorMessages[] = "Baris {$failure->row()}: " . implode(', ', $failure->errors());
+                                }
+                                Notification::make()
+                                    ->title('Import Gagal Sebagian')
+                                    ->body("✅ Berhasil: {$summary['processed']} data\n❌ Gagal: " . count($failures) . " baris\n\n" . implode("\n", array_slice($errorMessages, 0, 3)))
+                                    ->warning()
+                                    ->duration(10000)
+                                    ->send();
+                            } else {
+                                Log::info('===== SELESAI IMPORT (SUKSES) =====');
+
+                                Notification::make()
+                                    ->title('Import Berhasil!')
+                                    ->body("Berhasil mengimport {$summary['processed']} data barang ")
+                                    ->success()
+                                    ->send();
+                            }
+
+                        } catch (\Exception $e) {
+                            Log::error('===== IMPORT ERROR =====', [
+                                'message' => $e->getMessage(),
+                            ]);
+
+                            Notification::make()
+                                ->title('Import Gagal')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    })
+                    ->modalHeading('Import Data Barang')
+                    ->modalDescription('Upload file Excel dengan format sesuai template')
+                    ->modalSubmitActionLabel('Import')
+                    ->modalWidth('md'),
                 Action::make('export_pdf')
                     ->label('Cetak Laporan PDF')
                     ->color('info')
@@ -199,15 +260,12 @@ class ItemResource extends Resource
                         $livewire = $table->getLivewire();
                         $appliedFilters = $livewire->tableFilters ?? [];
 
-                        // Build query parameters
                         $params = [];
 
-                        // 1. Filter Kategori
                         if (isset($appliedFilters['category']['value']) && $appliedFilters['category']['value'] !== null) {
                             $params['category'] = $appliedFilters['category']['value'];
                         }
 
-                        // 2. Filter Rentang Tanggal
                         if (isset($appliedFilters['created_at']['created_at'])) {
                             $dateRangeString = $appliedFilters['created_at']['created_at'];
                             if ($dateRangeString) {
@@ -267,7 +325,6 @@ class ItemResource extends Resource
                         $u->where('period_id', static::$activePeriodId)
                     ),
             ], 'qty')
-            // 🔹 ADD PRIMARY FILTER HERE
         ;
     }
 

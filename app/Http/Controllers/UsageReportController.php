@@ -11,18 +11,15 @@ class UsageReportController extends Controller
 {
     public function export(Request $request)
     {
-        // Ambil parameter filter dari request
+
         $categoryIds = $request->input('categories', []);
         $usedBy = $request->input('used_by');
         $dateRange = $request->input('date_range');
 
-        // Query dasar
         $query = Usage::query()->with(['usageItems.item.category', 'createdBy']);
 
-        // Array untuk menyimpan keterangan filter
         $keteranganFilter = [];
 
-        // 1. Filter Kategori
         if (!empty($categoryIds)) {
             $query->whereHas('usageItems.item', function ($q) use ($categoryIds) {
                 $q->whereIn('category_id', $categoryIds);
@@ -32,13 +29,11 @@ class UsageReportController extends Controller
             $keteranganFilter[] = 'Filter Kategori: ' . implode(', ', $categoryNames);
         }
 
-        // 2. Filter Pengguna
         if ($usedBy) {
             $query->where('used_by', $usedBy);
             $keteranganFilter[] = 'Filter Pengguna: ' . $usedBy;
         }
 
-        // 3. Filter Rentang Tanggal
         if ($dateRange) {
             $dates = explode(' - ', $dateRange);
             if (count($dates) === 2) {
@@ -57,17 +52,11 @@ class UsageReportController extends Controller
             }
         }
 
-        // Ambil data
         $records = $query->orderBy('usage_date', 'desc')->get();
-
-        // Generate PDF
         $pdf = App::make('dompdf.wrapper');
         $pdf->loadView('pdf.usage_report', compact('records', 'keteranganFilter'));
         $pdf->setPaper('a4', 'landscape');
-
         $fileName = 'Laporan_Penggunaan_Barang_' . now()->format('Ymd_His') . '.pdf';
-
-        // Stream PDF ke browser untuk preview
         return $pdf->stream($fileName);
     }
 }

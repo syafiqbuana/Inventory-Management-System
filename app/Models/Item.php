@@ -20,7 +20,7 @@ class Item extends Model
 
     protected $casts = [
         'initial_stock' => 'integer',
-        'price' => 'integer',
+        'price' => 'decimal:2',
     ];
 
     protected $appends = ['total_stock'];

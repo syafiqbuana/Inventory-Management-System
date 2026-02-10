@@ -9,6 +9,9 @@ use Filament\Resources\Pages\ViewRecord;
 use Filament\Infolists\Infolist;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Infolists\Components\Section;
+use Filament\Infolists\Components\TableEntry;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 use Filament\Infolists\Components\RepeatableEntry;
 use App\Models\Usage;
 
