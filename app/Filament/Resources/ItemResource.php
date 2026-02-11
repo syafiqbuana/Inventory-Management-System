@@ -13,6 +13,7 @@ use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\ItemImport;
+use App\Exports\ItemTemplateExport;
 use Filament\Resources\Resource;
 use App\Models\ItemType;
 use App\Models\Period;
@@ -189,7 +190,12 @@ class ItemResource extends Resource
                     ->label('Download Template')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->color('success')
-                    ->url(route('item.template.download')),
+                    ->action(function () {
+                        return Excel::download(
+                            new ItemTemplateExport(),
+                            'template_import_barang_' . now()->format('Y-m-d') . '.xlsx'
+                        );
+                    }),
                 Action::make('import_excel')
                     ->label('Import Excel')
                     ->icon('heroicon-o-arrow-up-tray')

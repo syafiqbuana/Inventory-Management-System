@@ -9,6 +9,9 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Concerns\WithTitle;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -25,7 +28,18 @@ class ItemTemplateExport implements WithMultipleSheets
     }
 }
 
-class ItemTemplateSheet implements FromCollection, WithHeadings, WithStyles, WithTitle
+/**
+ * ============================
+ * Sheet 1 — Template Utama
+ * ============================
+ */
+class ItemTemplateSheet implements
+    FromCollection,
+    WithHeadings,
+    WithStyles,
+    WithTitle,
+    WithColumnWidths,
+    WithEvents
 {
     public function collection()
     {
@@ -38,7 +52,7 @@ class ItemTemplateSheet implements FromCollection, WithHeadings, WithStyles, Wit
                 'satuan' => 'Unit',
             ],
             [
-                'kategori' => 'Alat Tulis Kantor (0024)',
+                'kategori' => 'Alat Tulis Kantor',
                 'nama_barang' => 'Pulpen',
                 'stok_awal' => 100,
                 'harga' => 2500,
@@ -58,17 +72,49 @@ class ItemTemplateSheet implements FromCollection, WithHeadings, WithStyles, Wit
         ];
     }
 
+    public function columnWidths(): array
+    {
+        return [
+            'A' => 25,
+            'B' => 35,
+            'C' => 15,
+            'D' => 18,
+            'E' => 15,
+        ];
+    }
+
     public function styles(Worksheet $sheet)
     {
         return [
             1 => [
-                'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+                'font' => [
+                    'bold' => true,
+                    'color' => ['rgb' => 'FFFFFF'],
+                ],
                 'fill' => [
                     'fillType' => Fill::FILL_SOLID,
                     'startColor' => ['rgb' => '4472C4'],
                 ],
-                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'vertical'   => Alignment::VERTICAL_CENTER,
+                ],
             ],
+        ];
+    }
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event) {
+                $sheet = $event->sheet->getDelegate();
+
+                // Freeze header
+                $sheet->freezePane('A2');
+
+                // Auto filter
+                $sheet->setAutoFilter('A1:E1');
+            },
         ];
     }
 
@@ -78,13 +124,23 @@ class ItemTemplateSheet implements FromCollection, WithHeadings, WithStyles, Wit
     }
 }
 
-class CategoryReferenceSheet implements FromCollection, WithHeadings, WithStyles, WithTitle
+/**
+ * ============================
+ * Sheet 2 — Referensi Kategori
+ * ============================
+ */
+class CategoryReferenceSheet implements
+    FromCollection,
+    WithHeadings,
+    WithStyles,
+    WithTitle,
+    WithColumnWidths
 {
     public function collection()
     {
-        return Category::select('name')->get()->map(function ($category) {
-            return ['kategori' => $category->name];
-        });
+        return Category::select('name')->get()->map(fn ($category) => [
+            'kategori' => $category->name,
+        ]);
     }
 
     public function headings(): array
@@ -92,14 +148,27 @@ class CategoryReferenceSheet implements FromCollection, WithHeadings, WithStyles
         return ['Daftar Kategori Yang Tersedia'];
     }
 
+    public function columnWidths(): array
+    {
+        return [
+            'A' => 35,
+        ];
+    }
+
     public function styles(Worksheet $sheet)
     {
         return [
             1 => [
-                'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+                'font' => [
+                    'bold' => true,
+                    'color' => ['rgb' => 'FFFFFF'],
+                ],
                 'fill' => [
                     'fillType' => Fill::FILL_SOLID,
                     'startColor' => ['rgb' => '70AD47'],
+                ],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
                 ],
             ],
         ];
@@ -111,13 +180,23 @@ class CategoryReferenceSheet implements FromCollection, WithHeadings, WithStyles
     }
 }
 
-class ItemTypeReferenceSheet implements FromCollection, WithHeadings, WithStyles, WithTitle
+/**
+ * ============================
+ * Sheet 3 — Referensi Satuan
+ * ============================
+ */
+class ItemTypeReferenceSheet implements
+    FromCollection,
+    WithHeadings,
+    WithStyles,
+    WithTitle,
+    WithColumnWidths
 {
     public function collection()
     {
-        return ItemType::select('name')->get()->map(function ($type) {
-            return ['satuan' => $type->name];
-        });
+        return ItemType::select('name')->get()->map(fn ($type) => [
+            'satuan' => $type->name,
+        ]);
     }
 
     public function headings(): array
@@ -125,14 +204,27 @@ class ItemTypeReferenceSheet implements FromCollection, WithHeadings, WithStyles
         return ['Daftar Satuan Yang Tersedia'];
     }
 
+    public function columnWidths(): array
+    {
+        return [
+            'A' => 30,
+        ];
+    }
+
     public function styles(Worksheet $sheet)
     {
         return [
             1 => [
-                'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+                'font' => [
+                    'bold' => true,
+                    'color' => ['rgb' => 'FFFFFF'],
+                ],
                 'fill' => [
                     'fillType' => Fill::FILL_SOLID,
                     'startColor' => ['rgb' => 'FFC000'],
+                ],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
                 ],
             ],
         ];

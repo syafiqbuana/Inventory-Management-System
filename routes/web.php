@@ -6,8 +6,6 @@ use App\Http\Controllers\ExportPurchasePdfController;
 use App\Http\Controllers\ExportUsageNotePdfController;
 use App\Http\Controllers\UsageReportController;
 use App\Http\Controllers\ItemReportController;
-use App\Exports\ItemTemplateExport;
-use Maatwebsite\Excel\Facades\Excel;
 
 Route::get('/', function () {
     return redirect('/admin');
@@ -33,9 +31,3 @@ Route::get('/item-report/export', [ItemReportController::class, 'export'])
     ->name('item.report.export')
     ->middleware('auth');
 
-Route::get('/item/template/download', function () {
-    return Excel::download(
-        new ItemTemplateExport(), 
-        'template_import_barang_' . date('Y-m-d') . '.xlsx'
-    );
-})->name('item.template.download')->middleware('auth');
