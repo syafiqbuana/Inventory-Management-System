@@ -1,4 +1,4 @@
-# 🇮🇩 Inventory Management System - Dinas Kependudukan Dan Pencatatan Sipil Kab. Banyumas
+# Inventory Management System - Dinas Kependudukan Dan Pencatatan Sipil Kab. Banyumas
 
 ![Laravel](https://img.shields.io/badge/Laravel-11-FF2D20?style=for-the-badge&logo=laravel)
 ![Filament](https://img.shields.io/badge/Filament-3-FDAE4B?style=for-the-badge&logo=filament)
