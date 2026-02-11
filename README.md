@@ -106,8 +106,7 @@ A comprehensive report generator is included to track the flow of goods.
 
 1.  **Clone the Repository**
     ```bash
-    git clone [https://github.com/your-repo/dukcapil-inventory.git](https://github.com/your-repo/dukcapil-inventory.git)
-    cd dukcapil-inventory
+    git clone [https://github.com/syafiqbuana/Inventory-Management-System.git])
     ```
 
 2.  **Install Dependencies**
