@@ -21,6 +21,7 @@ class Item extends Model
     protected $casts = [
         'initial_stock' => 'integer',
         'price' => 'decimal:2',
+        'initial_period_id'=>'integer'
     ];
 
     protected $appends = ['total_stock'];
@@ -76,15 +77,17 @@ class Item extends Model
 
     public function stockForPeriod(int $periodId): int
     {
-        $initial = $this->initial_period_id === $periodId
+        // ✅ Cast ke integer untuk comparison
+        $initial = (int)$this->initial_period_id === $periodId
             ? $this->initial_stock
             : 0;
 
-        return $initial
-            + ($this->purchased_qty ?? 0)
-            - ($this->used_qty ?? 0);
-    }
+        // ✅ Gunakan magic getter, bukan attributes array
+        $purchased = (int) ($this->purchased_qty ?? 0);
+        $used = (int) ($this->used_qty ?? 0);
 
+        return $initial + $purchased - $used;
+    }
 
     public function getTotalStockAttribute(): int
     {
