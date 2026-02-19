@@ -128,6 +128,13 @@ class ItemResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->paginated([
+                            10,
+            25,
+            50,
+            100
+            ])
+            ->defaultPaginationPageOption(10)
             ->emptyStateHeading('Tidak Ada Barang')
             ->columns([
                 Tables\Columns\TextColumn::make('name')->label('Nama Barang')->alignCenter(),
