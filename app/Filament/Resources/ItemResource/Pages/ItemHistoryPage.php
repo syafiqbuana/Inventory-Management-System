@@ -38,21 +38,30 @@ class ItemHistoryPage extends Page implements HasTable
         return Item::with('itemType', 'category')->findOrFail($key);
     }
 
-    protected function getHeaderActions(): array
-    {
-        return [
-            Action::make('back')
-                ->label('Kembali')
-                ->icon('heroicon-o-arrow-left')
-                ->color('gray')
-                ->url(ItemResource::getUrl('index')),
-        ];
-    }
+protected function getHeaderActions(): array
+{
+    return [
+        Action::make('print')
+            ->label('Cetak PDF')
+            ->icon('heroicon-o-printer')
+            ->color('success')
+            ->url(route('items.history.report', ['item' => $this->record->id]))
+            ->openUrlInNewTab(),
+
+        Action::make('back')
+            ->label('Kembali')
+            ->icon('heroicon-o-arrow-left')
+            ->color('gray')
+            ->url(ItemResource::getUrl('index')),
+    ];
+}
 
     public function getSubheading(): string
     {
         return "Kategori: {$this->record->category?->name} | Stok Awal: {$this->record->initial_stock}";
     }
+
+    
 
     public function table(Table $table): Table
     {

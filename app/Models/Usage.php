@@ -14,6 +14,10 @@ class Usage extends Model
         'used_for',
     ];
 
+    protected $casts = [
+        'usage_date' => 'date'
+    ];
+
     protected static function booted()
     {
         static::creating(function ($item) {
