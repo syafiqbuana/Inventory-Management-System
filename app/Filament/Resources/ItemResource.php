@@ -128,23 +128,34 @@ class ItemResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->paginated([
+                10,
+                25,
+                50,
+                100
+            ])
+            ->defaultPaginationPageOption(10)
             ->emptyStateHeading('Tidak Ada Barang')
             ->columns([
-                Tables\Columns\TextColumn::make('name')->label('Nama Barang')->alignCenter(),
+                Tables\Columns\TextColumn::make('name')->label('Nama Barang')->alignCenter()->searchable(),
                 Tables\Columns\TextColumn::make('category.name')->label('Kategori')->alignCenter(),
                 Tables\Columns\TextColumn::make('initial_stock')->label('Stok Awal')->alignCenter()
                     ->formatStateUsing(fn($state) => $state == 0 ? '-' : $state),
                 Tables\Columns\TextColumn::make('stock')
                     ->label('Total Stock')
                     ->alignCenter()
+                    ->badge()
+                    ->icon('heroicon-o-cube')
                     ->state(
                         fn(Item $record) =>
                         $record->stockForPeriod(static::$activePeriodId)
-                    ),
+                    )
+                    ->color(fn($state) => $state < 10 ? 'danger' : 'success'),
 
                 Tables\Columns\TextColumn::make('display_price')
                     ->label('Harga')
                     ->badge()
+                    ->icon('heroicon-o-banknotes')
                     ->color('info')
                     ->getStateUsing(function ($record) {
                         return $record->price != 0
@@ -163,6 +174,7 @@ class ItemResource extends Resource
                 Tables\Columns\TextColumn::make('initialPeriod.year')->label('Periode')->alignCenter(),
                 Tables\Columns\TextColumn::make('createdBy.name')->label('Dibuat Oleh')->alignCenter()
                     ->badge()
+                    ->icon('heroicon-o-user')
                     ->color('primary'),
 
             ])
@@ -172,10 +184,22 @@ class ItemResource extends Resource
                     ->label('Kategori'),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\ViewAction::make()
-                    ->label('View Details')
-                    ->url(fn(Item $record) => PurchaseResource::getUrl('index', ['filters' => ['purchaseItems.item_id' => $record->id]])),
+                Tables\actions\ActionGroup::make([
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\ViewAction::make()
+                        ->label('View Details')
+                        ->url(fn(Item $record) => PurchaseResource::getUrl('index', ['filters' => ['purchaseItems.item_id' => $record->id]]))
+                    ,
+                    Tables\Actions\DeleteAction::make(),
+                    Tables\Actions\Action::make('history')
+                        ->label('Riwayat')
+                        ->icon('heroicon-o-clock')
+                        ->color('info')
+                        ->url(fn(Item $record) => ItemResource::getUrl('history', ['record' => $record]))
+                ])->iconButton()
+                    ->link()
+                    ->color('info')
+                    ->label('Aksi')
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -302,6 +326,11 @@ class ItemResource extends Resource
         ];
     }
 
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+    }
+
     protected static ?int $activePeriodId = null;
 
     public static function getEloquentQuery(): Builder
@@ -344,6 +373,7 @@ class ItemResource extends Resource
             'index' => Pages\ListItems::route('/'),
             'create' => Pages\CreateItem::route('/create'),
             'edit' => Pages\EditItem::route('/{record}/edit'),
+            'history' => Pages\ItemHistoryPage::route('/{record}/history'),
         ];
     }
 }

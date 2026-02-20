@@ -6,6 +6,7 @@ use App\Filament\Resources\ItemResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
+
 class ListItems extends ListRecords
 {
     protected static string $resource = ItemResource::class;
@@ -13,7 +14,11 @@ class ListItems extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            Actions\CreateAction::make()
+            ->label('Tambah Barang')
+            ->icon("heroicon-o-plus"),
         ];
     }
+
+
 }

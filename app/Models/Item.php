@@ -60,6 +60,7 @@ class Item extends Model
         return $this->hasMany(PurchaseItem::class);
     }
 
+
     public function usageItems()
     {
         return $this->hasMany(UsageItem::class);
@@ -69,6 +70,11 @@ class Item extends Model
     {
         return $this->hasMany(Usage::class);
     }
+
+    public function periodStocks()
+{
+    return $this->hasMany(PeriodStock::class);
+}
 
     public function itemType()
     {
