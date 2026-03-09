@@ -86,7 +86,11 @@ class UsageResource extends Resource
                             ->required()
                             ->reactive()
                             ->columnSpan(2),
-
+                        TextInput::make('sbbk_number')
+                            ->label('No. SBBK')
+                            ->placeholder('Masukkan nomor SBBK')
+                            ->columnSpan(2)
+                            ->required(),
                         TextInput::make('qty')
                             ->label('Jumlah')
                             ->numeric()

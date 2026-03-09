@@ -10,6 +10,7 @@ class Usage extends Model
 {
     protected $fillable = [
         'used_by',
+        
         'usage_date',
         'used_for',
     ];

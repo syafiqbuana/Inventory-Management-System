@@ -8,6 +8,7 @@ class UsageItem extends Model
 {
     protected $fillable = [
         'usage_id',
+        'sbbk_number',
         'item_id',
         'qty',
     ];

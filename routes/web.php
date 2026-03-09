@@ -7,6 +7,7 @@ use App\Http\Controllers\ExportUsageNotePdfController;
 use App\Http\Controllers\UsageReportController;
 use App\Http\Controllers\ItemReportController;
 use App\Http\Controllers\ItemHistoryReportController;
+use App\Http\Controllers\ItemCardController;
 
 Route::get('/', function () {
     return redirect('/admin');
@@ -31,6 +32,12 @@ Route::get('/usage-report/export', [UsageReportController::class, 'export'])
 Route::get('/item-report/export', [ItemReportController::class, 'export'])
     ->name('item.report.export')
     ->middleware('auth');
+
+Route::get('/print-all-items-pdf/stream', [ItemCardController::class, 'stream'])
+    ->name('print-all-items.stream');
+
+Route::get('/print-all-items-pdf/download', [ItemCardController::class, 'download'])
+    ->name('print-all-items.download');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/items/{item}/history/report', [ItemHistoryReportController::class, 'stream'])
