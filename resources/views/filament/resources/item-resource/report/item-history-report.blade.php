@@ -5,107 +5,112 @@
 <head>
     <meta charset="UTF-8">
     <title>Kartu Barang - {{ $item->name }}</title>
+
     <style>
         @page {
             size: A4 portrait;
-            margin: 10mm;
+            margin: 20mm;
         }
 
         body {
-            font-family: Arial, sans-serif;
-            font-size: 10px;
-            line-height: 1.2;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11px;
             color: #000;
-            margin: 0;
-            padding: 0;
         }
 
-        /* HEADER */
-        .header {
+        /* PAGE */
+        .page {
+            page-break-after: always;
+        }
+
+        /* TITLE */
+        .title {
             text-align: center;
-            margin-bottom: 12px;
-        }
-
-        .header h1 {
-            font-size: 16px;
+            font-size: 20px;
             font-weight: bold;
-            margin: 0 0 6px 0;
-            text-transform: uppercase;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
         }
 
-        /* TABLE DATA */
-        table.data-table {
+        /* ITEM INFO */
+        .item-info {
+            margin-bottom: 10px;
+        }
+
+        .item-info table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+
+        .item-info td {
+            padding: 4px;
+        }
+
+        /* TABLE */
+        .data-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
+            font-size: 10px;
         }
 
-        table.data-table thead {
-            background-color: #d9d9d9;
-        }
-
-        table.data-table th {
-            border: 1px solid #000;
+        .data-table th {
+            border: 1px solid black;
             padding: 5px;
-            font-size: 9px;
-            font-weight: bold;
+            background: #efefef;
             text-align: center;
         }
 
-        table.data-table td {
-            border: 1px solid #000;
+        .data-table td {
+            border: 1px solid #444;
             padding: 4px;
-            font-size: 9px;
-        }
-
-        .text-center {
             text-align: center;
-        }
-
-        .text-right {
-            text-align: right;
-            padding-right: 5px;
         }
 
         .text-left {
             text-align: left;
         }
 
-        .row-saldo-awal {
-            background-color: #fff9e6;
+        .text-right {
+            text-align: right;
         }
 
-        .row-pembelian {
-            background-color: #e6f3ff;
+        /* SIGNATURE */
+        .signature {
+            margin-top: 60px;
+            width: 100%;
         }
 
-        .row-penggunaan {
-            background-color: #ffe6e6;
-        }
-
-        /* FOOTER */
-        .footer {
-            margin-top: 20px;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .footer-section {
-            width: 40%;
+        .signature-box {
+            width: 260px;
+            margin-left: auto;
             text-align: center;
-            font-size: 9px;
+            font-size: 11px;
         }
 
-        .footer-signature {
-            margin-top: 30px;
+        .signature-name {
+            margin-top: 70px;
             font-weight: bold;
         }
 
+        .signature-line {
+            border-top: 1px solid #000;
+            margin-top: 5px;
+            padding-top: 3px;
+        }
+
+        .signature-nip {
+            font-size: 10px;
+        }
+
+        /* EMPTY MESSAGE */
         .empty-message {
             text-align: center;
-            padding: 15px;
+            padding: 20px;
             color: #999;
             font-style: italic;
+            font-size: 11px;
         }
     </style>
 </head>
@@ -118,122 +123,146 @@
             if ($n == 0 || $n === null) {
                 return '-';
             }
+
             return floor($n) == $n ? number_format($n, 0, ',', '.') : number_format($n, 2, ',', '.');
         }
     @endphp
 
-    {{-- HEADER --}}
-    <div class="header">
-        <h1>KARTU BARANG</h1>
+    <div class="page">
 
-        <table style="width: 100%; border-collapse: collapse; margin-top: 8px;">
-            <tr>
-                <td
-                    style="border: 1px solid #000; padding: 5px; width: 20%; font-weight: bold; background-color: #f5f5f5;">
-                    JENIS BARANG</td>
-                <td style="border: 1px solid #000; padding: 5px; width: 30%;"> : {{ $item->category?->name ?? '-' }}</td>
-                <td
-                    style="border: 1px solid #000; padding: 5px; width: 20%; text-align: center; font-weight: bold; background-color: #f5f5f5;">
-                    STOK AKHIR</td>
-                <td
-                    style="border: 1px solid #000; padding: 5px; width: 30%; text-align: center; font-weight: bold; font-size: 12px;">
-                    {{ number_format($finalStock, 0, ',', '.') }}</td>
-            </tr>
-            <tr>
-                <td
-                    style="border: 1px solid #000; padding: 5px; width: 20%; font-weight: bold; background-color: #f5f5f5;">
-                    NAMA BARANG</td>
-                <td style="border: 1px solid #000; padding: 5px; width: 30%;"> : {{ $item->name }}</td>
-                <td style="border: 1px solid #000; padding: 5px; width: 20%;"></td>
-                <td style="border: 1px solid #000; padding: 5px; width: 30%;"></td>
-            </tr>
-            <tr>
-                <td
-                    style="border: 1px solid #000; padding: 5px; width: 20%; font-weight: bold; background-color: #f5f5f5;">
-                    SATUAN</td>
-                <td style="border: 1px solid #000; padding: 5px; width: 30%;"> {{ $satuan }}</td>
-                <td style="border: 1px solid #000; padding: 5px; width: 20%;"></td>
-                <td style="border: 1px solid #000; padding: 5px; width: 30%;"></td>
-            </tr>
-        </table>
-    </div>
+        <div class="title">
+            KARTU BARANG
+        </div>
 
-    {{-- DATA TABLE --}}
-    @if ($transactions->count() > 0)
-        <table class="data-table">
-            <thead>
+        {{-- INFO BARANG --}}
+        <div class="item-info">
+            <table>
                 <tr>
-                    <th style="width: 3%">No.</th>
-                    <th style="width: 10%">TANGGAL</th>
-                    <th style="width: 15%">Nomor SBBM/SBBK</th>
-                    <th style="width: 20%">ALAMAT TUJUAN</th>
-                    <th style="width: 8%">JUMLAH MASUK</th>
-                    <th style="width: 8%">JUMLAH KELUAR</th>
-                    <th style="width: 8%">SISA</th>
-                    <th style="width: 12%">HARGA SATUAN</th>
-                    <th style="width: 16%">KETERANGAN</th>
+                    <td width="20%">Nama Barang</td>
+                    <td width="2%">:</td>
+                    <td>{{ $item->name }}</td>
                 </tr>
-            </thead>
-            <tbody>
-                @foreach ($transactions as $i => $trans)
-                    <tr class="row-{{ $trans['type'] }}">
-                        <td class="text-center">{{ $i + 1 }}</td>
-                        <td class="text-center">
-                            @if ($trans['date'])
-                                {{ \Carbon\Carbon::parse($trans['date'])->format('d-m-Y') }}
-                            @else
-                                -
-                            @endif
-                        </td>
-                        <td class="text-center">{{ $trans['reference'] }}</td>
-                        <td class="text-left">{{ $trans['purpose'] ?? '-' }}</td>
-                        <td class="text-center">
-                            @if ($trans['qty_in'] > 0)
-                                {{ $trans['qty_in'] }}
-                            @else
-                                - <!-- ← Kolom tetap ada, tapi isi dengan - -->
-                            @endif
-                        </td>
-                        <td class="text-center">
-                            @if ($trans['qty_out'] > 0)
-                                {{ $trans['qty_out'] }}
-                            @endif
-                        </td>
-                        <td class="text-center">
-                            <strong>{{ number_format($trans['sisa'], 0, ',', '.') }}</strong>
-                        </td>
-                        <td class="text-right">
-                            @if ($trans['unit_price'] > 0)
-                                Rp {{ fmtNum($trans['unit_price']) }}
-                            @endif
-                        </td>
-                        <td class="text-left">{{ $trans['notes'] ?? '-' }}</td>
+
+                <tr>
+                    <td>Kategori</td>
+                    <td>:</td>
+                    <td>{{ $item->category?->name ?? '-' }}</td>
+                </tr>
+
+                <tr>
+                    <td>Satuan</td>
+                    <td>:</td>
+                    <td>{{ $satuan }}</td>
+                </tr>
+
+                <tr>
+                    <td>Stok Akhir</td>
+                    <td>:</td>
+                    <td>{{ number_format($finalStock, 0, ',', '.') }}</td>
+                </tr>
+            </table>
+        </div>
+
+        {{-- TABEL TRANSAKSI --}}
+        @if ($transactions->count() > 0)
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th width="5%">No</th>
+                        <th width="12%">Tanggal</th>
+                        <th width="15%">SBBM/SBBK</th>
+                        <th width="10%">Masuk</th>
+                        <th width="10%">Keluar</th>
+                        <th width="10%">Sisa</th>
+                        <th width="18%">Harga</th>
+                        <th width="20%">Keterangan</th>
                     </tr>
-                @endforeach
-            </tbody>
-        </table>
-    @else
-        <div class="empty-message">
-            Belum ada transaksi untuk barang ini
-        </div>
-    @endif
+                </thead>
 
-    {{-- SIGNATURE SECTION --}}
-    <div class="footer">
-        <div class="footer-section">
-            <div>Purwokerto, {{ now()->translatedFormat('d F Y') }}</div>
-            <div class="footer-signature">
-                pengurus barang
+                <tbody>
+                    @foreach ($transactions as $i => $trans)
+                        <tr>
+                            <td>{{ $i + 1 }}</td>
+
+                            <td>
+                                @if ($trans['date'])
+                                    {{ $trans['date'] }}
+                                @else
+                                    -
+                                @endif
+                            </td>
+
+                            <td class="text-left">
+                                {{ $trans['reference'] ?? '-' }}
+                            </td>
+
+                            <td>
+                                @if ($trans['qty_in'] > 0)
+                                    {{ number_format($trans['qty_in'], 0, ',', '.') }}
+                                @else
+                                    -
+                                @endif
+                            </td>
+
+                            <td>
+                                @if ($trans['qty_out'] > 0)
+                                    {{ number_format($trans['qty_out'], 0, ',', '.') }}
+                                @else
+                                    -
+                                @endif
+                            </td>
+
+                            <td class="text-right">
+                                <strong>{{ number_format($trans['sisa'], 0, ',', '.') }}</strong>
+                            </td>
+
+                            <td class="text-right">
+                                @if ($trans['unit_price'] > 0)
+                                    {{ fmtNum($trans['unit_price']) }}
+                                @else
+                                    -
+                                @endif
+                            </td>
+
+                            <td class="text-left">
+                                {{ $trans['notes'] ?? '-' }}
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @else
+            <div class="empty-message">
+                Belum ada transaksi untuk barang ini
             </div>
-            <div style="margin-top: 40px;">
-                _____________________________
-            </div>
-            <div style="font-size: 8px; margin-top: 5px;">
-                NIP. ____________________
+        @endif
+
+        {{-- SIGNATURE --}}
+        <div class="signature">
+            <div class="signature-box">
+                <div>
+                    Purwokerto, {{ now()->translatedFormat('d F Y') }}
+                </div>
+
+                <div>
+                    Pengurus Barang
+                </div>
+
+                <div class="signature-name">
+                    <div style="height:60px;"></div>
+                </div>
+
+                <div class="signature-line">
+                    (TRISETIAWAN)
+                </div>
+
+                <div class="signature-nip">
+                    NIP : 19851107 201406 1 003
+                </div>
             </div>
         </div>
+
     </div>
-
 </body>
 
 </html>

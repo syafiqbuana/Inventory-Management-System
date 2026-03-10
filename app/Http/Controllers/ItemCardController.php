@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Item;
 use App\Models\Period;
+use App\Models\PeriodStock;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class ItemCardController extends Controller
 {
@@ -34,17 +34,32 @@ class ItemCardController extends Controller
             ], 404);
         }
 
-        $items = $this->getItems($categoryId, $periodId);
+        // PERBAIKAN: Cek apakah periode sudah ditutup
+        if ($period->is_closed) {
+            $itemsData = $this->buildItemCardsFromPeriodStock($periodId, $categoryId, $period);
+        } else {
+            $items = $this->getItems($categoryId, $periodId);
+            
+            if ($items->isEmpty()) {
+                return response()->json([
+                    'message' => 'Tidak ada barang untuk dicetak'
+                ], 404);
+            }
+            
+            $itemsData = $this->buildItemCards($items, $period);
+        }
 
-        if ($items->isEmpty()) {
+        if (empty($itemsData)) {
             return response()->json([
                 'message' => 'Tidak ada barang untuk dicetak'
             ], 404);
         }
 
-        $itemsData = $this->buildItemCards($items, $period);
 
-        Log::info('Query Log:', DB::getQueryLog());
+
+        // OPTIMASI: Set memory limit
+        ini_set('memory_limit', '512M');
+        ini_set('max_execution_time', '300');
 
         $pdf = Pdf::loadView('filament.pages.print-all-items-pdf', [
             'itemsData' => $itemsData,
@@ -57,7 +72,10 @@ class ItemCardController extends Controller
                 'isHtml5ParserEnabled' => true,
                 'isPhpEnabled' => false,
                 'dpi' => 96,
-                'defaultFont' => 'sans-serif'
+                'defaultFont' => 'sans-serif',
+                'debugKeepTemp' => false,
+                'debugCss' => false,
+                'debugLayout' => false,
             ]);
 
         return $pdf->stream('kartu-barang-periode-' . $period->year . '.pdf');
@@ -68,7 +86,6 @@ class ItemCardController extends Controller
         $periodId = $request->query('period_id');
         $categoryId = $request->query('category_id');
 
-        // Validasi periode
         if (!$periodId) {
             return response()->json([
                 'message' => 'Periode harus dipilih'
@@ -83,28 +100,176 @@ class ItemCardController extends Controller
             ], 404);
         }
 
-        $items = $this->getItems($categoryId, $periodId);
+        // PERBAIKAN: Handle periode closed
+        if ($period->is_closed) {
+            $itemsData = $this->buildItemCardsFromPeriodStock($periodId, $categoryId, $period);
+        } else {
+            $items = $this->getItems($categoryId, $periodId);
+            
+            if ($items->isEmpty()) {
+                return response()->json([
+                    'message' => 'Tidak ada barang untuk dicetak'
+                ], 404);
+            }
+            
+            $itemsData = $this->buildItemCards($items, $period);
+        }
 
-        if ($items->isEmpty()) {
+        if (empty($itemsData)) {
             return response()->json([
                 'message' => 'Tidak ada barang untuk dicetak'
             ], 404);
         }
 
-        $itemsData = $this->buildItemCards($items, $period);
+        ini_set('memory_limit', '512M');
+        ini_set('max_execution_time', '300');
 
         $pdf = Pdf::loadView('filament.pages.print-all-items-pdf', [
             'itemsData' => $itemsData,
             'generatedAt' => now()->translatedFormat('d F Y H:i'),
             'period' => $period,
         ])
-            ->setPaper('a4', 'portrait');
+            ->setPaper('a4', 'portrait')
+            ->setOptions([
+                'isRemoteEnabled' => false,
+                'isHtml5ParserEnabled' => true,
+                'isPhpEnabled' => false,
+                'dpi' => 96,
+                'defaultFont' => 'sans-serif',
+                'debugKeepTemp' => false,
+                'debugCss' => false,
+                'debugLayout' => false,
+            ]);
 
         return $pdf->download('kartu-barang-periode-' . $period->year . '.pdf');
     }
 
     /**
-     * Query items dengan eager loading minimal
+     * Build item cards dari PeriodStock (untuk periode yang sudah ditutup)
+     */
+    private function buildItemCardsFromPeriodStock($periodId, $categoryId, $period)
+    {
+        $result = [];
+
+        // Query period stocks dengan relasi item
+        $query = PeriodStock::query()
+            ->where('period_id', $periodId)
+            ->with([
+                'item' => function ($q) {
+                    $q->select('id', 'name', 'category_id', 'item_type_id')
+                        ->with([
+                            'category:id,name',
+                            'itemType:id,name',
+                        ]);
+                },
+                // Eager load transactions untuk periode ini
+                'item.purchaseItems' => function ($query) use ($periodId) {
+                    $query->select('id', 'item_id', 'purchase_id', 'qty', 'unit_price', 'supplier')
+                        ->whereHas('purchase', function ($q) use ($periodId) {
+                            $q->where('period_id', $periodId);
+                        });
+                },
+                'item.purchaseItems.purchase:id,purchase_date,note,period_id',
+                'item.usageItems' => function ($query) use ($periodId) {
+                    $query->select('id', 'item_id', 'usage_id', 'qty', 'sbbk_number')
+                        ->whereHas('usage', function ($q) use ($periodId) {
+                            $q->where('period_id', $periodId);
+                        });
+                },
+                'item.usageItems.usage:id,usage_date,used_for,period_id'
+            ]);
+
+        // Filter by category jika ada
+        if ($categoryId) {
+            $query->whereHas('item', function ($q) use ($categoryId) {
+                $q->where('category_id', $categoryId);
+            });
+        }
+
+        $periodStocks = $query->get();
+
+        foreach ($periodStocks as $periodStock) {
+            $item = $periodStock->item;
+            
+            if (!$item) {
+                continue; // Skip jika item tidak ditemukan
+            }
+
+            $transactions = [];
+            $satuan = $item->itemType?->name ?? '-';
+
+            /* ================= SALDO AWAL dari PeriodStock ================= */
+            if ($periodStock->initial_stock > 0) {
+                $transactions[] = [
+                    'date' => $period->created_at, // Tanggal awal periode
+                    'reference' => 'SALDO AWAL',
+                    'qty_in' => $periodStock->initial_stock,
+                    'qty_out' => 0,
+                    'unit_price' => $periodStock->price,
+                    'notes' => 'Periode ' . $period->year
+                ];
+            }
+
+            /* ================= PEMBELIAN ================= */
+            foreach ($item->purchaseItems as $pi) {
+                $transactions[] = [
+                    'date' => $pi->purchase?->purchase_date,
+                    'reference' => $pi->purchase?->note ?? '-',
+                    'qty_in' => $pi->qty,
+                    'qty_out' => 0,
+                    'unit_price' => $pi->unit_price,
+                    'notes' => $pi->supplier
+                ];
+            }
+
+            /* ================= PENGGUNAAN ================= */
+            foreach ($item->usageItems as $ui) {
+                $transactions[] = [
+                    'date' => $ui->usage?->usage_date,
+                    'reference' => $ui->sbbk_number ?? '-',
+                    'qty_in' => 0,
+                    'qty_out' => $ui->qty,
+                    'unit_price' => 0,
+                    'notes' => $ui->usage?->used_for
+                ];
+            }
+
+            // Skip jika tidak ada transaksi sama sekali
+            if (empty($transactions)) {
+                continue;
+            }
+
+            /* ================= SORT BY DATE ================= */
+            usort($transactions, function ($a, $b) {
+                return Carbon::parse($a['date'])->timestamp <=> Carbon::parse($b['date'])->timestamp;
+            });
+
+            /* ================= HITUNG SALDO ================= */
+            $saldo = 0;
+            foreach ($transactions as $i => $trx) {
+                $saldo += $trx['qty_in'] - $trx['qty_out'];
+                $transactions[$i]['saldo'] = $saldo;
+                $transactions[$i]['date'] = optional($trx['date'])->format('d/m/Y');
+            }
+
+            $result[] = [
+                'item' => $item,
+                'satuan' => $satuan,
+                'transactions' => $transactions,
+                'finalStock' => $saldo
+            ];
+        }
+
+        // Sort by item name
+        usort($result, function ($a, $b) {
+            return strcmp($a['item']->name, $b['item']->name);
+        });
+
+        return $result;
+    }
+
+    /**
+     * Query items dengan eager loading minimal (untuk periode aktif)
      * Filter berdasarkan periode
      */
     private function getItems($categoryId, $periodId)
@@ -152,7 +317,7 @@ class ItemCardController extends Controller
     }
 
     /**
-     * Build data kartu barang per periode
+     * Build data kartu barang per periode (untuk periode aktif)
      */
     private function buildItemCards($items, $period)
     {

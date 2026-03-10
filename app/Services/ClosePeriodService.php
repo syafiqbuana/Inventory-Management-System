@@ -70,7 +70,7 @@ class ClosePeriodService
             }
 
             /**
-             * 3️⃣ Close current period
+             * 3️ Close current period
              */
             $period->update([
                 'is_closed' => true,
@@ -78,7 +78,7 @@ class ClosePeriodService
             ]);
 
             /**
-             * 4️⃣ Create next period
+             * 4️ Create next period
              */
             $nextPeriod = Period::create([
                 'year' => $period->year + 1,
