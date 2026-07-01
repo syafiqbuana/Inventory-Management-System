@@ -2,15 +2,20 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Purchase;
-use Filament\Tables;
 use App\Filament\Resources\PurchaseResource\Pages\ViewPurchase;
+use App\Models\Purchase;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\ViewAction;
+use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 
 class LatestPurchase extends BaseWidget
 {
-    protected static ?string $heading = 'Pembelian Terbaru';
+    public static function getHeading(): string
+    {
+        return 'Pembelian Terbaru';
+    }
     protected static ?int $sort = 4;
     protected int|string|array $columnSpan = 'full';
 
@@ -50,11 +55,11 @@ class LatestPurchase extends BaseWidget
                     ->toggleable(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
+                ViewAction::make()
                     ->label('Lihat Detail')
                     ->color('info')
                      ->url(fn ($record) => ViewPurchase::getUrl(['record' => $record->id])),
-                Tables\Actions\DeleteAction::make()
+                DeleteAction::make()
                     ->disabled(fn(Purchase $record) => $record->period->is_closed)
             ])
             ->paginated(false);

@@ -3,16 +3,13 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PeriodResource\Pages;
-use App\Filament\Resources\PeriodResource\RelationManagers;
 use App\Models\Period;
+use Filament\Actions\Action;
 use Filament\Forms;
-use Filament\Forms\Form;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Widgets\StatsOverviewWidget\Stat;
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 
 
@@ -20,11 +17,17 @@ class PeriodResource extends Resource
 {
     protected static ?string $model = Period::class;
 
-    protected static ?string $pluralLabel = 'Periode';
+    public static function getPluralLabel(): string
+    {
+        return 'Periode';
+    }
 
-    protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
+    public static function getNavigationIcon(): ?string
+    {
+        return 'heroicon-o-calendar-days';
+    }
 
-    public static function form(Form $form): Form
+    public static function form(Schema $form): Schema
     {
         return $form;
     }
@@ -42,7 +45,7 @@ class PeriodResource extends Resource
                 //
             ])
             ->actions([
-                                Tables\Actions\Action::make('close')
+                    Action::make('close')
                     ->label('Tutup Periode')
                     ->icon('heroicon-o-lock-closed')
                     ->color('danger')
@@ -56,17 +59,14 @@ class PeriodResource extends Resource
             ->bulkActions([]);
     }
 
-    public static function canCreate(): bool
-    {
-        return false;
-    }
-
     public static function getRelations(): array
     {
         return [
             //
         ];
     }
+
+
 
     public static function getPages(): array
     {

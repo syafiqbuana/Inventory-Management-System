@@ -17,8 +17,6 @@ class EditItem extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
-
-
     protected function mutateFormDataBeforeFill(array $data): array
     {
         $data['total_stock'] = $this->record->total_stock;

@@ -30,6 +30,11 @@ class EditPurchase extends EditRecord
         ];
     }
 
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
+
     protected function beforeSave(){
         if($this->record->period->is_closed){
             Notification::make()

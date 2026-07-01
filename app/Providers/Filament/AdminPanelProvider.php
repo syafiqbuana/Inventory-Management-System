@@ -27,17 +27,11 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
+            ->viteTheme('resources/css/filament/admin/theme.css')
             ->login()
             ->spa()
             ->favicon(asset('images/logo.png'))
-            ->brandLogo(fn() => new HtmlString('
-            <div class="flex items-center gap-3">
-                <img src="' . asset('images/logo.png') . '" alt="Logo" class="h-10 w-auto">
-                <span class="text-xl font-bold tracking-tight text-gray-950 dark:text-white">
-                    ' . config('app.name') . '
-                </span>
-            </div>
-        '))
+            
             // Tetap isi brandName sebagai fallback (untuk judul tab browser)
             ->brandName(config('app.name'))
             ->brandLogoHeight('2.5rem')

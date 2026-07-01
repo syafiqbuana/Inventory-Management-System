@@ -14,4 +14,9 @@ class ItemType extends Model
     {
         return $this->hasMany(Item::class);
     }
+
+    public function countItemByType()
+    {
+        return $this->items()->count();
+    }
 }

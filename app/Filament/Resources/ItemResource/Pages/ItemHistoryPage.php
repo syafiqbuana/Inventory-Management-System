@@ -21,7 +21,7 @@ class ItemHistoryPage extends Page implements HasTable
     use InteractsWithTable;
 
     protected static string $resource = ItemResource::class;
-    protected static string $view = 'filament.resources.item-resource.pages.item-history-page';
+    protected string $view = 'filament.resources.item-resource.pages.item-history-page';
 
     public Item $record;
 

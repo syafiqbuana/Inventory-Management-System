@@ -3,14 +3,20 @@
 namespace App\Filament\Widgets;
 
 use App\Models\User;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
 use Filament\Tables;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+
 class LatestUsers extends BaseWidget
 {
 
-    protected static ?string $heading = 'User Terbaru';
+    public static function getHeading(): string
+    {
+        return 'User Terbaru';
+    }
 
     protected int|string|array $columnSpan = 'full';
     protected static ?int $sort = 2;
@@ -61,8 +67,8 @@ class LatestUsers extends BaseWidget
     protected function getTableActions(): array
     {
         return [
-            Tables\Actions\EditAction::make(),
-            Tables\Actions\DeleteAction::make(),
+            EditAction::make(),
+            DeleteAction::make(),
         ];
     }
 

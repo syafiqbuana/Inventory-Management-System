@@ -3,36 +3,32 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Item;
+use App\Models\Period;
 use Filament\Tables;
+use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Database\Eloquent\Builder;
-use App\Models\Period;
 
 
 class LatestItem extends BaseWidget
 {
-    protected static ?string $heading = 'Item Terbaru';
     protected static ?int $sort = 3;
 
     protected static ?int $activePeriodId = null;
     protected int|string|array $columnSpan = 'full';
-
-    protected function getTableQuery(): Builder
-    {
-        return Item::query()
-            ->with('category')
-            ->orderByDesc('created_at') 
-            ->limit(5);
-    }
 
         public static function boot(): void
     {
         static::$activePeriodId = Period::active()->id;
     }
 
-    protected function getTableColumns(): array
+    public function table(Table $table): Table
     {
-        return [
+        return $table
+        ->heading('Item Terbaru')
+        ->query(
+            Item::query()->with('category')->orderByDesc('created_at')->limit(5))
+        ->columns([
             Tables\Columns\TextColumn::make('name')
                 ->label('Nama Item'),
 
@@ -74,7 +70,7 @@ class LatestItem extends BaseWidget
                 //show item type
                 Tables\Columns\TextColumn::make('itemType.name')->label('Satuan')->alignCenter(),
                 Tables\Columns\TextColumn::make('initialPeriod.year')->label('Periode')->alignCenter(),
-        ];
+        ]);
     }
 
     protected function isTablePaginationEnabled(): bool

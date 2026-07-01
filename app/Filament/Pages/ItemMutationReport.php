@@ -2,29 +2,40 @@
 
 namespace App\Filament\Pages;
 
-use Filament\Pages\Page;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Section;
-use Filament\Forms\Form;
 use App\Models\Period;
+use Filament\Actions\Action;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
+use Filament\Pages\Page;
+use Filament\Schemas\Components\Form;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+
 
 class ItemMutationReport extends Page implements HasForms
 {
-    protected static string $view = 'filament.pages.item-mutation-report';
+    protected string $view = 'filament.pages.item-mutation-report';
     
     use InteractsWithForms;
     
-    protected static ?string $navigationIcon = 'heroicon-o-document-chart-bar';
     
-    protected static ?string $navigationLabel = 'Laporan Mutasi';
+    public static function getNavigationLabel(): string
+    {
+        return 'Laporan Mutasi';
+    }
     
-    protected static ?string $navigationGroup = 'Laporan';
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Laporan';
+    }
     
-    protected static ?string $pluralModelLabel = 'Laporan Mutasi Barang';
+    public static function getPluralModelLabel(): string
+    {
+        return 'Laporan Mutasi Barang';
+    }
     
     protected static ?int $navigationSort = 10;
     
@@ -40,9 +51,9 @@ class ItemMutationReport extends Page implements HasForms
         ]);
     }
     
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->schema([
                 Section::make('Filter Laporan')
                     ->description('Pilih periode dan tanggal akhir untuk laporan mutasi barang persediaan')
@@ -70,7 +81,14 @@ class ItemMutationReport extends Page implements HasForms
                             ->displayFormat('d F Y')
                             ->helperText('Laporan akan menampilkan mutasi barang dari saldo awal sampai tanggal yang dipilih'),
                     ])
-                    ->columns(2)
+                    ->columns(2),
+                    Action::make('generate_pdf')
+                        ->label('Generate PDF')
+                        ->icon('heroicon-o-printer')
+                        ->action(fn () => 
+                            $this->generatePDF()
+                        )
+
             ])
             ->statePath('data');
     }

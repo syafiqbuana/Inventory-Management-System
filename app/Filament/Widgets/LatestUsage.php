@@ -2,17 +2,21 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Resources\UsageResource\Pages\ViewUsage;
+use App\Models\Usage;
+use Filament\Actions\ViewAction;
 use Filament\Tables;
 use Filament\Tables\Table;
-use App\Models\Usage;
 use Filament\Widgets\TableWidget as BaseWidget;
-use App\Filament\Resources\UsageResource\Pages\ViewUsage;
 
 
 class LatestUsage extends BaseWidget
 {
 
-    protected static ?string $heading = 'Penggunaan Terbaru';
+    public static function getHeading(): string
+    {
+        return 'Penggunaan Terbaru';
+    }
     protected static ?int $sort = 4;
     protected int|string|array $columnSpan = 'full';
     public function table(Table $table): Table
@@ -43,7 +47,7 @@ class LatestUsage extends BaseWidget
             ])
             ->paginated(false)
             ->actions([
-                Tables\Actions\ViewAction::make()
+                ViewAction::make()
                 ->label('Lihat Detail')
                 ->color('info')
                 ->url(fn ($record) => ViewUsage::getUrl(['record' => $record->id])),

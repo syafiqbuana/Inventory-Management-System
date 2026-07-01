@@ -2,26 +2,37 @@
 
 namespace App\Filament\Pages;
 
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Contracts\HasForms;
-use Filament\Forms\Form;
-use Filament\Pages\Page;
 use App\Models\Category;
 use App\Models\Item;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Section;
 use App\Models\Period;
+use Filament\Actions\Action;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
+use Filament\Pages\Page;
+use Filament\Schemas\Components\Form;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+
 
 class ItemCard extends Page implements HasForms
 {
     use InteractsWithForms;
 
-    protected static ?string $navigationIcon = 'heroicon-o-printer';
-    protected static ?string $navigationGroup = 'Laporan';
-    protected static ?string $navigationLabel = 'Kartu Barang';
-    protected static ?string $title = 'Kartu Barang';
-    protected static string $view = 'filament.pages.item-card';
+    public static function getNavigationGroup(): ?string
+    {
+        return 'Laporan';
+    }
+    public static function getNavigationLabel(): string
+    {
+        return 'Kartu Barang';
+    }
+    public function getTitle(): string|\Illuminate\Contracts\Support\Htmlable
+    {
+        return 'Kartu Barang';
+    }
+    protected string $view = 'filament.pages.item-card';
 
     public ?array $data = [];
 
@@ -30,9 +41,9 @@ class ItemCard extends Page implements HasForms
         $this->form->fill();
     }
 
-    public function form(Form $form): Form
+    public function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->schema([
                 Section::make('Filter Laporan')
                     ->description('Pilih periode dan kategori barang')
@@ -54,6 +65,12 @@ class ItemCard extends Page implements HasForms
                     ])
                     ->columns(2)
                     ->columnSpan('full'),
+                    Action::make('generate_pdf')
+                        ->label('Generate PDF')
+                        ->icon('heroicon-o-printer')
+                        ->action(fn () => 
+                            $this->generatePDF()
+                        )
             ])
             ->statePath('data');
     }
